@@ -6,7 +6,7 @@ const nextConfig = {
     return [
       {
         source: "/admin/login",
-        destination: "https://api.globaltechnext.com/admin/login",
+        destination: "http://127.0.0.1:8000/admin/login",
         permanent: false,
       },
     ];
