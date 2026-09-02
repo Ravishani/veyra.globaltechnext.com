@@ -19,6 +19,7 @@ import {
   IconShoppingCart,
   IconStar,
   IconX,
+  
   IconPackage,
   IconTruck,
   IconShieldCheck,
