@@ -130,9 +130,13 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
+
       environment: "sandbox",
+
       orderId: data.order_id || orderId,
+
       paymentSessionId: data.payment_session_id,
+      
       orderStatus: data.order_status,
       data,
     });
