@@ -49,3 +49,74 @@ body {
   color: var(--foreground);
   font-family: "Nunito", sans-serif;
 }
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) translateX(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+}
+
+.toast-in {
+  animation: toastIn 0.3s ease-out forwards;
+}
+.currency-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.currency-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.currency-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.currency-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+.currency-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+.checkout-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d5cec5 transparent;
+  overscroll-behavior: contain;
+}
+
+.checkout-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.checkout-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.checkout-scrollbar::-webkit-scrollbar-thumb {
+  background: #d5cec5;
+  border-radius: 999px;
+}
+
+.checkout-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #bcb3a9;
+}
+
+.checkout-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@media (max-width: 639px) {
+  .checkout-scrollbar::-webkit-scrollbar {
+    width: 3px;
+  }
+}

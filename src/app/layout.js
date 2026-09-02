@@ -3,6 +3,7 @@ import "./globals.css";
 import Script from "next/script";
 import Header from "./layouts/header";
 import { CartProvider } from "./context/CartContext";
+import Footer from "./layouts/footer";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -30,6 +31,7 @@ export default function RootLayout({ children }) {
             <Header />
 
             {children}
+            <Footer/>
             <Script
               src="https://sdk.cashfree.com/js/v3/cashfree.js"
               strategy="afterInteractive"

@@ -20,22 +20,33 @@ import {
   IconStar,
   IconTruck,
 } from "@tabler/icons-react";
+import { useCart } from "../../context/CartContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-function formatNumber(value) {
-  return Number(value || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+function stripHtml(value) {
+  if (!value) return "";
+
+  return String(value)
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/p>/gi, " ")
+    .replace(/<\/div>/gi, " ")
+    .replace(/<\/li>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function getImageUrl(image) {
-  if (!image) return null;
+function getImageUrl(value) {
+  if (!value) return "";
 
-  const imageValue = String(image).trim();
-
-  if (!imageValue) return null;
+  const imageValue = String(value).trim();
 
   if (
     imageValue.startsWith("http://") ||
@@ -44,307 +55,392 @@ function getImageUrl(image) {
     return imageValue;
   }
 
-  const laravelUrl = API_URL?.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+  const baseUrl = API_URL
+    ?.replace(/\/api\/?$/, "")
+    .replace(/\/+$/, "");
 
-  if (!laravelUrl) return null;
+  if (!baseUrl) return imageValue;
 
-  return `${laravelUrl}/${imageValue.replace(/^\/+/, "")}`;
+  return `${baseUrl}/${imageValue.replace(/^\/+/, "")}`;
 }
 
-function getProductPrice(product) {
-  const price = Number(product?.price || 0);
-  const discountPrice = Number(product?.discount_price || 0);
+function formatPrice(value) {
+  const number = Number(value || 0);
 
-  if (discountPrice > 0 && discountPrice < price) {
-    return discountPrice;
-  }
-
-  return price;
+  return new Intl.NumberFormat("en-IN", {
+    maximumFractionDigits: 0,
+  }).format(number);
 }
 
-function getDiscount(product) {
-  const price = Number(product?.price || 0);
-  const discountPrice = Number(product?.discount_price || 0);
+function calculateDiscount(price, discountPrice) {
+  const original = Number(price || 0);
+  const discounted = Number(discountPrice || 0);
 
-  if (!price || !discountPrice || discountPrice >= price) {
+  if (!original || !discounted || discounted >= original) {
     return 0;
   }
 
-  return Math.round(((price - discountPrice) / price) * 100);
+  return Math.round(((original - discounted) / original) * 100);
 }
 
-function stripHtml(value) {
-  if (!value) return "";
-
-  return String(value)
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-export default function ProductDetailsPage() {
+export default function ProductDetails() {
   const params = useParams();
-
   const slug = params?.slug;
+
+  const cart = useCart();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [cartAdded, setCartAdded] = useState(false);
-  const [activeImage, setActiveImage] = useState(null);
+  const [activeImage, setActiveImage] = useState("");
+  const [activeTab, setActiveTab] = useState("description");
+  const [error, setError] = useState("");
+
+  const description = useMemo(
+    () => stripHtml(product?.description),
+    [product?.description]
+  );
+
+  const specifications = useMemo(
+    () => stripHtml(product?.specifications),
+    [product?.specifications]
+  );
+
+  const review = useMemo(
+    () => stripHtml(product?.reviews),
+    [product?.reviews]
+  );
+
+  const originalPrice = Number(product?.price || 0);
+  const salePrice = Number(product?.discount_price || 0);
+
+  const hasDiscount =
+    originalPrice > 0 &&
+    salePrice > 0 &&
+    salePrice < originalPrice;
+
+  const currentPrice = hasDiscount ? salePrice : originalPrice;
+
+  const discount = calculateDiscount(
+    originalPrice,
+    salePrice
+  );
+
+  const savings = hasDiscount
+    ? originalPrice - salePrice
+    : 0;
+
+  const isAvailable = Number(product?.status) === 1;
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug || !API_URL) {
+      if (!API_URL) {
+        setError("API URL is not configured.");
+        setLoading(false);
+      }
 
-    const fetchProduct = async () => {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchProduct() {
       try {
         setLoading(true);
+        setError("");
 
         const response = await fetch(
-          `${API_URL}/products/${slug}`,
+          `${API_URL}/products/${encodeURIComponent(slug)}`,
           {
+            method: "GET",
             cache: "no-store",
           }
         );
 
         if (!response.ok) {
-          throw new Error("Product not found");
+          throw new Error("Unable to fetch product.");
         }
 
         const result = await response.json();
 
-        const productData = result?.data || result?.product || result;
+        if (cancelled) return;
+
+        const productData = result?.data;
+
+        if (!productData) {
+          throw new Error("Product data not found.");
+        }
 
         setProduct(productData);
-
-        const image = getImageUrl(productData?.image);
-
-        setActiveImage(image);
-
-        const wishlist = JSON.parse(
-          localStorage.getItem("wishlist") || "[]"
-        );
-
-        setIsWishlisted(
-          wishlist.includes(productData?.id)
-        );
-
-        const cart = JSON.parse(
-          localStorage.getItem("cart") || "[]"
-        );
-
-        const existingProduct = cart.find(
-          (item) => item.id === productData?.id
-        );
-
-        setCartAdded(Boolean(existingProduct));
-
-        if (existingProduct?.quantity) {
-          setQuantity(existingProduct.quantity);
+        setActiveImage(getImageUrl(productData.image));
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err?.message ||
+              "Something went wrong while loading the product."
+          );
         }
-      } catch (error) {
-        console.error("Product fetch error:", error);
-        setProduct(null);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-    };
+    }
 
     fetchProduct();
+
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
-  const unitPrice = useMemo(() => {
-    return getProductPrice(product);
-  }, [product]);
-
-  const discount = useMemo(() => {
-    return getDiscount(product);
-  }, [product]);
-
-  const originalPrice = Number(product?.price || 0);
-
-  const savings = useMemo(() => {
-    if (!originalPrice || !discount) return 0;
-
-    return (originalPrice - unitPrice) * quantity;
-  }, [originalPrice, unitPrice, quantity, discount]);
-
-  const subtotal = useMemo(() => {
-    return unitPrice * quantity;
-  }, [unitPrice, quantity]);
-
-  const description = useMemo(() => {
-    return stripHtml(product?.description);
-  }, [product]);
-
-  const specifications = useMemo(() => {
-    if (!product?.specifications) return [];
-
-    if (typeof product.specifications === "object") {
-      return Object.entries(product.specifications);
+  useEffect(() => {
+    if (!product?.id || typeof window === "undefined") {
+      return;
     }
 
     try {
-      const parsed = JSON.parse(product.specifications);
+      const storedWishlist = JSON.parse(
+        localStorage.getItem("wishlist") || "[]"
+      );
 
-      if (typeof parsed === "object") {
-        return Object.entries(parsed);
+      if (!Array.isArray(storedWishlist)) {
+        setIsWishlisted(false);
+        return;
       }
-    } catch {}
 
-    return [];
-  }, [product]);
-
-  const updateQuantity = (value) => {
-    if (value < 1) return;
-
-    setQuantity(value);
-
-    if (!product) return;
-
-    const cart = JSON.parse(
-      localStorage.getItem("cart") || "[]"
-    );
-
-    const existingIndex = cart.findIndex(
-      (item) => item.id === product.id
-    );
-
-    if (existingIndex !== -1) {
-      cart[existingIndex].quantity = value;
-
-      localStorage.setItem(
-        "cart",
-        JSON.stringify(cart)
-      );
-    }
-  };
-
-  const addToCart = () => {
-    if (!product) return;
-
-    const cart = JSON.parse(
-      localStorage.getItem("cart") || "[]"
-    );
-
-    const existingIndex = cart.findIndex(
-      (item) => item.id === product.id
-    );
-
-    if (existingIndex !== -1) {
-      cart[existingIndex].quantity += quantity;
-    } else {
-      cart.push({
-        id: product.id,
-        name: product.name,
-        slug: product.slug,
-        sku: product.sku,
-        price: product.price,
-        discount_price: product.discount_price,
-        image: product.image,
-        category: product.category,
-        quantity,
-      });
-    }
-
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(cart)
-    );
-
-    setCartAdded(true);
-  };
-
-  const toggleWishlist = () => {
-    if (!product) return;
-
-    const wishlist = JSON.parse(
-      localStorage.getItem("wishlist") || "[]"
-    );
-
-    if (wishlist.includes(product.id)) {
-      const updated = wishlist.filter(
-        (id) => id !== product.id
+      const exists = storedWishlist.some(
+        (item) =>
+          String(item?.id) === String(product.id)
       );
 
-      localStorage.setItem(
-        "wishlist",
-        JSON.stringify(updated)
-      );
-
+      setIsWishlisted(exists);
+    } catch {
       setIsWishlisted(false);
-    } else {
-      wishlist.push(product.id);
+    }
+  }, [product?.id]);
+
+  const notifyCart = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("cartUpdated"));
+    }
+  };
+
+  const notifyWishlist = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new Event("wishlistUpdated")
+      );
+    }
+  };
+
+  const getCartProduct = () => {
+    return {
+      ...product,
+      id: product?.id,
+      product_id: product?.id,
+      productId: product?.id,
+      quantity,
+      price: currentPrice,
+      discount_price: salePrice,
+      original_price: originalPrice,
+      image: product?.image,
+    };
+  };
+
+  const handleAddToCart = () => {
+    if (!product || !isAvailable) return;
+
+    const item = getCartProduct();
+
+    try {
+      if (typeof cart?.addToCart === "function") {
+        cart.addToCart(item, quantity);
+      } else if (typeof cart?.addItem === "function") {
+        cart.addItem(item, quantity);
+      } else if (typeof cart?.add === "function") {
+        cart.add(item, quantity);
+      } else if (
+        typeof cart?.addProduct === "function"
+      ) {
+        cart.addProduct(item, quantity);
+      } else {
+        const storedCart = JSON.parse(
+          localStorage.getItem("cart") || "[]"
+        );
+
+        const cartArray = Array.isArray(storedCart)
+          ? storedCart
+          : [];
+
+        const existingIndex = cartArray.findIndex(
+          (cartItem) =>
+            String(cartItem?.id) ===
+              String(product.id) ||
+            String(cartItem?.product_id) ===
+              String(product.id) ||
+            String(cartItem?.productId) ===
+              String(product.id)
+        );
+
+        if (existingIndex !== -1) {
+          cartArray[existingIndex] = {
+            ...cartArray[existingIndex],
+            quantity:
+              Number(
+                cartArray[existingIndex]?.quantity || 0
+              ) + quantity,
+          };
+        } else {
+          cartArray.push(item);
+        }
+
+        localStorage.setItem(
+          "cart",
+          JSON.stringify(cartArray)
+        );
+      }
+
+      notifyCart();
+
+      setCartAdded(true);
+
+      window.setTimeout(() => {
+        setCartAdded(false);
+      }, 2500);
+    } catch (err) {
+      console.error("Add to cart error:", err);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!product || !isAvailable) return;
+
+    const item = getCartProduct();
+
+    try {
+      localStorage.setItem(
+        "buyNowProduct",
+        JSON.stringify(item)
+      );
+
+      localStorage.setItem(
+        "checkoutProduct",
+        JSON.stringify(item)
+      );
+
+      window.location.href = "/checkout";
+    } catch (err) {
+      console.error("Buy now error:", err);
+    }
+  };
+
+  const handleWishlist = () => {
+    if (!product || typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const storedWishlist = JSON.parse(
+        localStorage.getItem("wishlist") || "[]"
+      );
+
+      const wishlist = Array.isArray(storedWishlist)
+        ? storedWishlist
+        : [];
+
+      const existingIndex = wishlist.findIndex(
+        (item) =>
+          String(item?.id) === String(product.id)
+      );
+
+      if (existingIndex !== -1) {
+        wishlist.splice(existingIndex, 1);
+        setIsWishlisted(false);
+      } else {
+        wishlist.push({
+          ...product,
+          id: product.id,
+          price: currentPrice,
+          quantity: 1,
+        });
+
+        setIsWishlisted(true);
+      }
 
       localStorage.setItem(
         "wishlist",
         JSON.stringify(wishlist)
       );
 
-      setIsWishlisted(true);
+      notifyWishlist();
+    } catch (err) {
+      console.error("Wishlist error:", err);
     }
   };
 
-  const buyNow = () => {
-    if (!product) return;
-
-    const buyNowProduct = {
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      sku: product.sku,
-      price: product.price,
-      discount_price: product.discount_price,
-      image: product.image,
-      category: product.category,
-      quantity,
-    };
-
-    localStorage.setItem(
-      "buyNow",
-      JSON.stringify(buyNowProduct)
+  const decreaseQuantity = () => {
+    setQuantity((current) =>
+      Math.max(1, current - 1)
     );
+  };
 
-    window.location.href = "/checkout";
+  const increaseQuantity = () => {
+    setQuantity((current) => current + 1);
   };
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f8f7f3]">
-        <div className="text-center">
-          <div className="mx-auto h-11 w-11 animate-spin rounded-full border-[3px] border-[#e8e2d8] border-t-[#FF7200]" />
+      <main className="min-h-screen bg-[#f7f5f1] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl animate-pulse">
+          <div className="mb-8 h-5 w-56 rounded-full bg-[#e5e0d8]" />
 
-          <p className="mt-5 text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#777168]">
-            Loading Product
-          </p>
+          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="h-[420px] rounded-[30px] bg-white sm:h-[540px]" />
+
+            <div className="space-y-5">
+              <div className="h-5 w-32 rounded-full bg-[#e5e0d8]" />
+
+              <div className="h-12 w-4/5 rounded-xl bg-[#e5e0d8]" />
+
+              <div className="h-9 w-48 rounded-xl bg-[#e5e0d8]" />
+
+              <div className="h-28 rounded-2xl bg-white" />
+
+              <div className="h-14 rounded-xl bg-[#e5e0d8]" />
+
+              <div className="h-14 rounded-xl bg-[#e5e0d8]" />
+            </div>
+          </div>
         </div>
       </main>
     );
   }
 
-  if (!product) {
+  if (error || !product) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f8f7f3] px-5">
-        <div className="max-w-md text-center">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white text-[#FF7200] shadow-sm">
-            <IconPackage size={34} />
+      <main className="flex min-h-screen items-center justify-center bg-[#f7f5f1] px-5">
+        <div className="w-full max-w-xl rounded-[30px] border border-[#e4dfd7] bg-white p-8 text-center shadow-[0_25px_70px_rgba(35,30,25,0.08)] sm:p-10">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fff1e8] text-[#ff7200]">
+            <IconPackage size={29} stroke={1.7} />
           </div>
 
-          <h1 className="mt-6 text-3xl font-black tracking-tight text-[#171614]">
+          <h1 className="mt-6 text-2xl font-black tracking-[-0.025em] text-[#24211e] sm:text-3xl">
             Product Not Found
           </h1>
 
-          <p className="mt-3 text-sm leading-6 text-[#777168]">
-            The product you are looking for may have been
-            removed or is currently unavailable.
+          <p className="mx-auto mt-3 max-w-md text-[15px] leading-7 text-[#77716a]">
+            {error ||
+              "The requested product could not be found."}
           </p>
 
           <Link
             href="/products"
-            className="mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-[#FF7200] px-6 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white transition hover:bg-[#e86600]"
+            className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#ff7200] px-6 text-sm font-extrabold tracking-[0.02em] text-white transition hover:bg-[#e86600]"
           >
-            <IconArrowLeft size={15} />
+            <IconArrowLeft size={17} />
             Back to Products
           </Link>
         </div>
@@ -352,553 +448,532 @@ export default function ProductDetailsPage() {
     );
   }
 
-  const imageUrl = activeImage || getImageUrl(product.image);
+  const image =
+    activeImage || getImageUrl(product.image);
 
   return (
-    <main className="min-h-screen bg-[#f8f7f3] text-[#171614]">
-      <div className="border-b border-[#e8e2d8] bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-center gap-2 text-[9px] font-bold uppercase tracking-[0.12em] text-[#888178]">
-            <Link
-              href="/products"
-              className="shrink-0 transition hover:text-[#FF7200]"
-            >
-              Products
-            </Link>
+    <main className="min-h-screen bg-[#f7f5f1] text-[#292622]">
+      <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+        <div className="mb-7 flex flex-wrap items-center gap-2 text-[12px] font-bold tracking-[0.06em] text-[#8b847c] sm:text-[13px]">
+          <Link
+            href="/"
+            className="transition hover:text-[#ff7200]"
+          >
+            Home
+          </Link>
 
-            <IconChevronRight
-              size={13}
-              className="shrink-0"
-            />
-
-            <span className="truncate text-[#171614]">
-              {product.name}
-            </span>
-          </div>
+          <IconChevronRight size={15} />
 
           <Link
-            href="/cart"
-            className="hidden items-center gap-2 rounded-full border border-[#e4ddd3] bg-white px-4 py-2 text-[9px] font-extrabold uppercase tracking-[0.1em] text-[#3d3934] transition hover:border-[#FF7200] hover:text-[#FF7200] sm:flex"
+            href="/products"
+            className="transition hover:text-[#ff7200]"
           >
-            <IconShoppingBag size={15} />
-            View Cart
+            Products
           </Link>
+
+          <IconChevronRight size={15} />
+
+          <span className="text-[#403b36]">
+            {product?.category?.name || "Product"}
+          </span>
         </div>
-      </div>
 
-      <section className="relative overflow-hidden bg-white">
-        <div className="absolute -left-40 top-20 h-[420px] w-[420px] rounded-full bg-[#FF7200]/5 blur-3xl" />
+        <section className="grid gap-8 lg:grid-cols-[1.03fr_0.97fr] lg:gap-12 xl:gap-16">
+          <div className="min-w-0">
+            <div className="relative overflow-hidden rounded-[30px] border border-[#e5e0d8] bg-white p-4 shadow-[0_18px_55px_rgba(35,30,25,0.06)] sm:p-8">
+              {discount > 0 && (
+                <div className="absolute left-5 top-5 z-10 rounded-full bg-[#ff7200] px-4 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-white shadow-lg sm:left-7 sm:top-7">
+                  Save {discount}%
+                </div>
+              )}
 
-        <div className="absolute -right-40 top-0 h-[520px] w-[520px] rounded-full bg-[#D6B76E]/10 blur-3xl" />
+              <button
+                type="button"
+                onClick={handleWishlist}
+                aria-label={
+                  isWishlisted
+                    ? "Remove from wishlist"
+                    : "Add to wishlist"
+                }
+                className="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-[#e5e0d8] bg-white/95 text-[#38332e] shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-[#ff7200] hover:text-[#ff7200] sm:right-7 sm:top-7"
+              >
+                {isWishlisted ? (
+                  <IconHeartFilled size={20} />
+                ) : (
+                  <IconHeart size={20} stroke={1.8} />
+                )}
+              </button>
 
-        <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)] lg:items-start lg:gap-14">
-            <div>
-              <div className="relative overflow-hidden rounded-[30px] border border-[#e7e0d6] bg-[#f7f5f0] shadow-[0_25px_70px_rgba(32,29,24,0.07)]">
-                {discount > 0 && (
-                  <div className="absolute left-5 top-5 z-10 rounded-full bg-[#FF7200] px-4 py-2 text-[9px] font-black uppercase tracking-[0.1em] text-white shadow-lg">
-                    {discount}% OFF
+              <div className="flex min-h-[360px] items-center justify-center sm:min-h-[520px]">
+                {image ? (
+                  <img
+                    src={image}
+                    alt={product.name || "Product"}
+                    className="h-auto max-h-[460px] w-full max-w-[620px] object-contain transition duration-500 hover:scale-[1.025]"
+                  />
+                ) : (
+                  <div className="flex h-80 w-full items-center justify-center rounded-3xl bg-[#f4f1ec] text-[#999189]">
+                    <IconPackage
+                      size={50}
+                      stroke={1.3}
+                    />
                   </div>
                 )}
-
-                <button
-                  type="button"
-                  onClick={toggleWishlist}
-                  className="absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-[#e5ded4] bg-white text-[#55504a] shadow-md transition hover:border-[#FF7200] hover:text-[#FF7200]"
-                >
-                  {isWishlisted ? (
-                    <IconHeartFilled
-                      size={19}
-                      className="text-[#FF7200]"
-                    />
-                  ) : (
-                    <IconHeart size={20} />
-                  )}
-                </button>
-
-                <div className="flex min-h-[420px] items-center justify-center p-8 sm:min-h-[540px] sm:p-14">
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={product.name}
-                      className="max-h-[500px] w-full object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.08)] transition duration-500 hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <div className="flex h-72 w-full items-center justify-center text-[#c8c1b7]">
-                      <IconPackage size={70} stroke={1} />
-                    </div>
-                  )}
-                </div>
               </div>
+            </div>
 
-              <div className="mt-4 grid grid-cols-4 gap-3">
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3 overflow-x-auto pb-1">
                 <button
                   type="button"
                   onClick={() =>
-                    setActiveImage(getImageUrl(product.image))
+                    setActiveImage(
+                      getImageUrl(product.image)
+                    )
                   }
-                  className="flex h-20 items-center justify-center overflow-hidden rounded-2xl border-2 border-[#FF7200] bg-white p-2"
+                  className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border bg-white p-2 transition ${
+                    activeImage ===
+                    getImageUrl(product.image)
+                      ? "border-[#ff7200] shadow-[0_8px_25px_rgba(255,114,0,0.12)]"
+                      : "border-[#e5e0d8]"
+                  }`}
                 >
-                  {imageUrl ? (
+                  {product.image ? (
                     <img
-                      src={imageUrl}
-                      alt={product.name}
+                      src={getImageUrl(product.image)}
+                      alt={product.name || "Product"}
                       className="h-full w-full object-contain"
                     />
                   ) : (
-                    <IconPackage
-                      size={22}
-                      className="text-[#c8c1b7]"
-                    />
+                    <IconPackage size={22} />
                   )}
                 </button>
+              </div>
 
-                <div className="flex h-20 items-center justify-center rounded-2xl border border-dashed border-[#ded7cd] bg-white text-[#b4ada3]">
-                  <IconPackage size={21} />
+              <div className="hidden shrink-0 items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#8d867e] sm:flex">
+                <IconShieldCheck
+                  size={16}
+                  className="text-[#ff7200]"
+                />
+                Secure Product
+              </div>
+            </div>
+          </div>
+
+          <div className="flex min-w-0 flex-col justify-center">
+            <div className="flex flex-wrap items-center gap-3">
+              {product?.category?.name && (
+                <span className="rounded-full bg-[#fff0e5] px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.1em] text-[#d95f00]">
+                  {product.category.name}
+                </span>
+              )}
+
+              {product?.sku && (
+                <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#918a82]">
+                  SKU: {product.sku}
+                </span>
+              )}
+            </div>
+
+            <h1 className="mt-5 max-w-3xl text-[32px] font-black leading-[1.08] tracking-[-0.035em] text-[#24211e] sm:text-[42px] lg:text-[48px]">
+              {product.name}
+            </h1>
+
+            <div className="mt-5 flex flex-wrap items-end gap-x-4 gap-y-2">
+              <span className="text-[32px] font-black tracking-[-0.025em] text-[#ff7200] sm:text-[38px]">
+                ₹{formatPrice(currentPrice)}
+              </span>
+
+              {hasDiscount && (
+                <span className="pb-1 text-[18px] font-bold text-[#9b938b] line-through sm:text-[20px]">
+                  ₹{formatPrice(originalPrice)}
+                </span>
+              )}
+
+              {hasDiscount && (
+                <span className="mb-1 rounded-lg bg-[#edf7ef] px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.06em] text-[#32824a]">
+                  Save ₹{formatPrice(savings)}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-7 rounded-2xl border border-[#e6e1d9] bg-white p-5 sm:p-6">
+              <div className="grid gap-5 sm:grid-cols-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff4eb] text-[#ff7200]">
+                    <IconTruck size={18} />
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.08em] text-[#4b4640]">
+                      Fast Delivery
+                    </p>
+
+                    <p className="mt-1 text-[12px] text-[#8b847c]">
+                      Quick & reliable
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex h-20 items-center justify-center rounded-2xl border border-dashed border-[#ded7cd] bg-white text-[#b4ada3]">
-                  <IconShieldCheck size={21} />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff4eb] text-[#ff7200]">
+                    <IconShieldCheck size={18} />
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.08em] text-[#4b4640]">
+                      Secure Checkout
+                    </p>
+
+                    <p className="mt-1 text-[12px] text-[#8b847c]">
+                      Protected payment
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex h-20 items-center justify-center rounded-2xl border border-dashed border-[#ded7cd] bg-white text-[#b4ada3]">
-                  <IconTruck size={21} />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff4eb] text-[#ff7200]">
+                    <IconRefresh size={18} />
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.08em] text-[#4b4640]">
+                      Easy Support
+                    </p>
+
+                    <p className="mt-1 text-[12px] text-[#8b847c]">
+                      We're here to help
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="lg:pt-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {product.category?.name && (
-                  <span className="rounded-full bg-[#fff4e9] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.13em] text-[#FF7200]">
-                    {product.category.name}
-                  </span>
-                )}
-
-                <span className="flex items-center gap-1.5 rounded-full bg-[#edf8f1] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-[#198754]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#198754]" />
-                  In Stock
-                </span>
-              </div>
-
-              <h1 className="mt-5 text-[34px] font-black leading-[1.08] tracking-[-0.045em] text-[#171614] sm:text-[46px]">
-                {product.name}
-              </h1>
-
-              <div className="mt-5 flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <IconStar
-                      key={star}
-                      size={16}
-                      className="fill-[#D6B76E] text-[#D6B76E]"
-                    />
-                  ))}
-
-                  <span className="ml-2 text-[10px] font-bold text-[#6e6860]">
-                    5.0
-                  </span>
-                </div>
-
-                {product.sku && (
-                  <>
-                    <span className="h-4 w-px bg-[#ded8cf]" />
-
-                    <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-[#969087]">
-                      SKU: {product.sku}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              <div className="mt-7 rounded-[24px] border border-[#eadfce] bg-[#fffaf3] p-5 sm:p-6">
-                <div className="flex flex-wrap items-end gap-3">
-                  <span className="text-[34px] font-black tracking-[-0.04em] text-[#FF7200]">
-                    ₹{formatNumber(unitPrice)}
-                  </span>
-
-                  {discount > 0 && (
-                    <span className="mb-1 text-[16px] font-bold text-[#a19a91] line-through">
-                      ₹{formatNumber(originalPrice)}
-                    </span>
-                  )}
-                </div>
-
-                {discount > 0 && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="rounded-md bg-[#eaf7ef] px-2 py-1 text-[8px] font-black uppercase tracking-[0.08em] text-[#198754]">
-                      Save ₹{formatNumber(originalPrice - unitPrice)}
-                    </span>
-
-                    <span className="text-[9px] font-semibold text-[#827b72]">
-                      Limited time offer
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {description && (
-                <div className="mt-7">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#aaa39a]">
-                    Product Overview
+            <div className="mt-7 border-y border-[#e4dfd7] py-6">
+              <div className="flex items-center justify-between gap-5">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.11em] text-[#918a82]">
+                    Quantity
                   </p>
 
-                  <p className="mt-3 text-[13px] leading-7 text-[#666058]">
-                    {description.length > 400
-                      ? `${description.substring(0, 400)}...`
-                      : description}
-                  </p>
-                </div>
-              )}
-
-              <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-[#e7e0d7] bg-white p-4">
-                  <IconTruck
-                    size={20}
-                    className="text-[#FF7200]"
-                  />
-
-                  <p className="mt-3 text-[9px] font-black text-[#25221f]">
-                    Fast Delivery
-                  </p>
-
-                  <p className="mt-1 text-[8px] leading-4 text-[#969087]">
-                    Quick doorstep delivery
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-[#e7e0d7] bg-white p-4">
-                  <IconShieldCheck
-                    size={20}
-                    className="text-[#FF7200]"
-                  />
-
-                  <p className="mt-3 text-[9px] font-black text-[#25221f]">
-                    Secure Payment
-                  </p>
-
-                  <p className="mt-1 text-[8px] leading-4 text-[#969087]">
-                    Safe & protected checkout
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-[#e7e0d7] bg-white p-4">
-                  <IconRefresh
-                    size={20}
-                    className="text-[#FF7200]"
-                  />
-
-                  <p className="mt-3 text-[9px] font-black text-[#25221f]">
-                    Easy Returns
-                  </p>
-
-                  <p className="mt-1 text-[8px] leading-4 text-[#969087]">
-                    Simple return process
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-8 border-t border-[#e8e2d9] pt-7">
-                <div className="flex flex-col gap-4 sm:flex-row">
-                  <div className="flex h-14 w-fit items-center rounded-xl border border-[#ded7ce] bg-white">
+                  <div className="mt-3 flex h-12 items-center rounded-xl border border-[#ddd7cf] bg-white">
                     <button
                       type="button"
-                      onClick={() =>
-                        updateQuantity(quantity - 1)
-                      }
+                      onClick={decreaseQuantity}
                       disabled={quantity <= 1}
-                      className="flex h-full w-12 items-center justify-center text-[#55504a] transition hover:text-[#FF7200] disabled:opacity-40"
+                      className="flex h-full w-12 items-center justify-center text-[#4b4640] transition hover:text-[#ff7200] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <IconMinus size={17} />
                     </button>
 
-                    <span className="flex h-full min-w-14 items-center justify-center border-x border-[#e1dbd2] text-[13px] font-black text-[#25221f]">
+                    <span className="flex w-12 justify-center text-[16px] font-black text-[#292622]">
                       {quantity}
                     </span>
 
                     <button
                       type="button"
-                      onClick={() =>
-                        updateQuantity(quantity + 1)
-                      }
-                      className="flex h-full w-12 items-center justify-center text-[#55504a] transition hover:text-[#FF7200]"
+                      onClick={increaseQuantity}
+                      className="flex h-full w-12 items-center justify-center text-[#4b4640] transition hover:text-[#ff7200]"
                     >
                       <IconPlus size={17} />
                     </button>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={buyNow}
-                    className="flex h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-[#FF7200] px-6 text-[10px] font-black uppercase tracking-[0.13em] text-white shadow-[0_12px_30px_rgba(255,114,0,0.2)] transition hover:-translate-y-0.5 hover:bg-[#e86600]"
-                  >
-                    Buy Now
-                    <IconArrowRight size={16} />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={addToCart}
-                    className="flex h-14 flex-1 items-center justify-center gap-2 rounded-xl border border-[#1c1a18] bg-[#1c1a18] px-6 text-[10px] font-black uppercase tracking-[0.13em] text-white transition hover:bg-[#FF7200] hover:border-[#FF7200]"
-                  >
-                    <IconShoppingBag size={17} />
-
-                    {cartAdded
-                      ? "Added to Cart"
-                      : "Add to Cart"}
-                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={toggleWishlist}
-                  className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#e1dbd2] bg-white text-[9px] font-black uppercase tracking-[0.12em] text-[#55504a] transition hover:border-[#FF7200] hover:text-[#FF7200]"
-                >
-                  {isWishlisted ? (
-                    <>
-                      <IconHeartFilled
-                        size={16}
-                        className="text-[#FF7200]"
-                      />
-                      Remove from Wishlist
-                    </>
-                  ) : (
-                    <>
-                      <IconHeart size={17} />
-                      Add to Wishlist
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[#e8e2d9] pt-5">
-                <div className="flex items-center gap-2">
-                  <IconClock
-                    size={15}
-                    className="text-[#D6B76E]"
-                  />
-                  <span className="text-[9px] font-bold text-[#716b63]">
-                    Quick Dispatch
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <IconShieldCheck
-                    size={15}
-                    className="text-[#D6B76E]"
-                  />
-                  <span className="text-[9px] font-bold text-[#716b63]">
-                    Secure Checkout
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <IconTruck
-                    size={15}
-                    className="text-[#D6B76E]"
-                  />
-                  <span className="text-[9px] font-bold text-[#716b63]">
-                    Doorstep Delivery
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-[#e7e1d8] bg-[#f8f7f3]">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.35fr_0.65fr]">
-            <div className="rounded-[28px] border border-[#e2dcd3] bg-white p-6 shadow-[0_15px_45px_rgba(35,32,27,0.04)] sm:p-8">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fff4e9] text-[#FF7200]">
-                  <IconPackage size={21} />
-                </div>
-
-                <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#aaa39a]">
-                    Product Information
+                <div className="text-right">
+                  <p className="text-[11px] font-black uppercase tracking-[0.11em] text-[#918a82]">
+                    Availability
                   </p>
 
-                  <h2 className="mt-1 text-2xl font-black tracking-tight text-[#171614]">
-                    Product Details
-                  </h2>
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        isAvailable
+                          ? "bg-[#36a35b]"
+                          : "bg-[#c74b4b]"
+                      }`}
+                    />
+
+                    <span
+                      className={`text-[13px] font-extrabold ${
+                        isAvailable
+                          ? "text-[#32824a]"
+                          : "text-[#b44343]"
+                      }`}
+                    >
+                      {isAvailable
+                        ? "In Stock"
+                        : "Currently Unavailable"}
+                    </span>
+                  </div>
                 </div>
               </div>
-
-              {description ? (
-                <div className="mt-7 text-[13px] leading-7 text-[#666058]">
-                  {description}
-                </div>
-              ) : (
-                <p className="mt-7 text-sm text-[#999188]">
-                  Product description is currently unavailable.
-                </p>
-              )}
             </div>
 
-            <div className="rounded-[28px] border border-[#e2dcd3] bg-white p-6 shadow-[0_15px_45px_rgba(35,32,27,0.04)] sm:p-8">
-              <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#aaa39a]">
-                Product Data
-              </p>
-
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-[#171614]">
-                Specifications
-              </h2>
-
-              {specifications.length > 0 ? (
-                <div className="mt-6 divide-y divide-[#eee8df]">
-                  {specifications.map(
-                    ([key, value], index) => (
-                      <div
-                        key={`${key}-${index}`}
-                        className="flex items-start justify-between gap-5 py-4"
-                      >
-                        <span className="text-[9px] font-bold capitalize text-[#969087]">
-                          {String(key).replace(
-                            /_/g,
-                            " "
-                          )}
-                        </span>
-
-                        <span className="max-w-[55%] text-right text-[10px] font-black text-[#292622]">
-                          {String(value)}
-                        </span>
-                      </div>
-                    )
-                  )}
-                </div>
-              ) : (
-                <div className="mt-6 rounded-2xl bg-[#faf8f4] p-5">
-                  <p className="text-[10px] leading-5 text-[#8d867d]">
-                    Specifications for this product are
-                    currently unavailable.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-          <div className="rounded-[30px] bg-[#171614] p-7 text-white sm:p-10 lg:p-12">
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D6B76E]">
-                  Ready to Order?
-                </p>
-
-                <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-[-0.04em] sm:text-4xl">
-                  Get {product.name} delivered to your doorstep.
-                </h2>
-
-                <p className="mt-3 max-w-xl text-[11px] leading-6 text-[#bcb6ae]">
-                  Complete your purchase with our secure
-                  checkout and enjoy a smooth shopping
-                  experience.
-                </p>
-              </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_0.72fr]">
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={!isAvailable}
+                className={`group flex h-14 items-center justify-center gap-3 rounded-2xl px-5 text-[14px] font-black tracking-[0.025em] transition ${
+                  !isAvailable
+                    ? "cursor-not-allowed bg-[#d8d3cc] text-white"
+                    : cartAdded
+                    ? "bg-[#32824a] text-white shadow-[0_12px_30px_rgba(50,130,74,0.18)]"
+                    : "bg-[#292622] text-white shadow-[0_12px_30px_rgba(41,38,34,0.16)] hover:-translate-y-0.5 hover:bg-[#171513]"
+                }`}
+              >
+                {cartAdded ? (
+                  <>
+                    <IconCheck size={19} />
+                    Added to Cart
+                  </>
+                ) : (
+                  <>
+                    <IconShoppingBag size={19} />
+                    Add to Cart
+                  </>
+                )}
+              </button>
 
               <button
                 type="button"
-                onClick={buyNow}
-                className="flex h-14 items-center justify-center gap-2 rounded-xl bg-[#FF7200] px-7 text-[10px] font-black uppercase tracking-[0.14em] text-white transition hover:bg-[#e86600]"
+                onClick={handleBuyNow}
+                disabled={!isAvailable}
+                className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-[#ff7200] px-5 text-[14px] font-black tracking-[0.025em] text-white shadow-[0_12px_30px_rgba(255,114,0,0.2)] transition hover:-translate-y-0.5 hover:bg-[#e96700] disabled:cursor-not-allowed disabled:bg-[#d8d3cc] disabled:shadow-none"
               >
                 Buy Now
-                <IconArrowRight size={16} />
+                <IconArrowRight size={18} />
               </button>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section className="border-t border-[#e8e2d9] bg-[#f8f7f3]">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#FF7200]">
-                Customer Feedback
-              </p>
-
-              <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-[#171614]">
-                Customer Reviews
-              </h2>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <IconStar
-                    key={star}
-                    size={17}
-                    className="fill-[#D6B76E] text-[#D6B76E]"
-                  />
-                ))}
-              </div>
-
-              <span className="text-[10px] font-bold text-[#777168]">
-                5.0 out of 5
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-7 grid grid-cols-1 gap-5 md:grid-cols-3">
-            {[
-              {
-                name: "Verified Customer",
-                text: "Great product quality and smooth overall shopping experience.",
-              },
-              {
-                name: "Happy Customer",
-                text: "Product was exactly as described. Very happy with the purchase.",
-              },
-              {
-                name: "Verified Buyer",
-                text: "Good quality, clean packaging and fast delivery.",
-              },
-            ].map((review, index) => (
-              <div
-                key={index}
-                className="rounded-[24px] border border-[#e2dcd3] bg-white p-6"
-              >
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <IconStar
-                      key={star}
-                      size={13}
-                      className="fill-[#D6B76E] text-[#D6B76E]"
-                    />
-                  ))}
+            {cartAdded && (
+              <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[#cde7d4] bg-[#f1faf3] px-4 py-3.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#dff2e3] text-[#32824a]">
+                  <IconCheck size={18} />
                 </div>
 
-                <p className="mt-5 text-[11px] leading-6 text-[#666058]">
-                  “{review.text}”
-                </p>
+                <div>
+                  <p className="text-[13px] font-black text-[#2e7544]">
+                    Product added to your cart
+                  </p>
 
-                <div className="mt-5 flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fff4e9] text-[9px] font-black text-[#FF7200]">
-                    {review.name.charAt(0)}
-                  </div>
+                  <p className="mt-0.5 text-[12px] text-[#6f8c76]">
+                    Quantity {quantity} added successfully.
+                  </p>
+                </div>
+
+                <Link
+                  href="/cart"
+                  className="ml-auto hidden text-[12px] font-black text-[#32824a] hover:underline sm:block"
+                >
+                  View Cart
+                </Link>
+              </div>
+            )}
+
+            <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-[#e4dfd7] bg-white p-4">
+                <div className="flex items-center gap-3">
+                  <IconClock
+                    size={19}
+                    className="shrink-0 text-[#ff7200]"
+                  />
 
                   <div>
-                    <p className="text-[9px] font-black text-[#292622]">
-                      {review.name}
+                    <p className="text-[12px] font-black uppercase tracking-[0.07em] text-[#39342f]">
+                      Quick Processing
                     </p>
 
-                    <div className="mt-0.5 flex items-center gap-1 text-[7px] font-bold uppercase tracking-[0.08em] text-[#198754]">
-                      <IconCheck size={10} />
-                      Verified Purchase
-                    </div>
+                    <p className="mt-1 text-[11px] leading-5 text-[#8c857d]">
+                      Order processed quickly
+                    </p>
                   </div>
                 </div>
               </div>
-            ))}
+
+              <div className="rounded-2xl border border-[#e4dfd7] bg-white p-4">
+                <div className="flex items-center gap-3">
+                  <IconPackage
+                    size={19}
+                    className="shrink-0 text-[#ff7200]"
+                  />
+
+                  <div>
+                    <p className="text-[12px] font-black uppercase tracking-[0.07em] text-[#39342f]">
+                      Quality Product
+                    </p>
+
+                    <p className="mt-1 text-[11px] leading-5 text-[#8c857d]">
+                      Carefully packed for delivery
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </section>
+
+        <section className="mt-14 rounded-[30px] border border-[#e4dfd7] bg-white p-5 shadow-[0_18px_55px_rgba(35,30,25,0.045)] sm:p-8 lg:mt-20 lg:p-10">
+          <div className="flex gap-2 overflow-x-auto border-b border-[#e7e2db]">
+            <button
+              type="button"
+              onClick={() => setActiveTab("description")}
+              className={`shrink-0 border-b-2 px-4 pb-4 text-[13px] font-black tracking-[0.03em] transition sm:px-5 ${
+                activeTab === "description"
+                  ? "border-[#ff7200] text-[#ff7200]"
+                  : "border-transparent text-[#817a72] hover:text-[#292622]"
+              }`}
+            >
+              Description
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setActiveTab("specifications")
+              }
+              className={`shrink-0 border-b-2 px-4 pb-4 text-[13px] font-black tracking-[0.03em] transition sm:px-5 ${
+                activeTab === "specifications"
+                  ? "border-[#ff7200] text-[#ff7200]"
+                  : "border-transparent text-[#817a72] hover:text-[#292622]"
+              }`}
+            >
+              Specifications
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("reviews")}
+              className={`shrink-0 border-b-2 px-4 pb-4 text-[13px] font-black tracking-[0.03em] transition sm:px-5 ${
+                activeTab === "reviews"
+                  ? "border-[#ff7200] text-[#ff7200]"
+                  : "border-transparent text-[#817a72] hover:text-[#292622]"
+              }`}
+            >
+              Reviews
+            </button>
+          </div>
+
+          {activeTab === "description" && (
+            <div className="max-w-4xl pt-8">
+              <p className="text-[15px] leading-8 tracking-[0.01em] text-[#625c55] sm:text-[16px]">
+                {description ||
+                  "No description available for this product."}
+              </p>
+            </div>
+          )}
+
+          {activeTab === "specifications" && (
+            <div className="max-w-4xl pt-8">
+              <p className="text-[15px] leading-8 tracking-[0.01em] text-[#625c55] sm:text-[16px]">
+                {specifications ||
+                  "No specifications available for this product."}
+              </p>
+            </div>
+          )}
+
+          {activeTab === "reviews" && (
+            <div className="pt-8">
+              {review ? (
+                <div className="max-w-4xl rounded-2xl border border-[#e4dfd7] bg-[#fcfbf9] p-6">
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff2e7] text-[#ff7200]">
+                      <IconStar
+                        size={19}
+                        fill="currentColor"
+                      />
+                    </div>
+
+                    <div>
+                      <p className="text-[13px] font-black tracking-[0.02em] text-[#302d29]">
+                        Customer Review
+                      </p>
+
+                      <p className="mt-0.5 text-[11px] text-[#8d867e]">
+                        Product feedback
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-[15px] leading-8 text-[#625c55]">
+                    {review}
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-[#e5e0d8] bg-[#faf9f7] p-6">
+                  <p className="text-[14px] font-semibold leading-7 text-[#706960]">
+                    No reviews available for this product yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="flex items-center gap-4 rounded-2xl border border-[#e4dfd7] bg-white p-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fff1e7] text-[#ff7200]">
+              <IconTruck size={21} />
+            </div>
+
+            <div>
+              <p className="text-[13px] font-black text-[#302d29]">
+                Reliable Delivery
+              </p>
+
+              <p className="mt-1 text-[11px] text-[#8b847c]">
+                Fast & secure shipping
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 rounded-2xl border border-[#e4dfd7] bg-white p-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fff1e7] text-[#ff7200]">
+              <IconShieldCheck size={21} />
+            </div>
+
+            <div>
+              <p className="text-[13px] font-black text-[#302d29]">
+                Secure Payment
+              </p>
+
+              <p className="mt-1 text-[11px] text-[#8b847c]">
+                Protected checkout
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 rounded-2xl border border-[#e4dfd7] bg-white p-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fff1e7] text-[#ff7200]">
+              <IconRefresh size={21} />
+            </div>
+
+            <div>
+              <p className="text-[13px] font-black text-[#302d29]">
+                Customer Support
+              </p>
+
+              <p className="mt-1 text-[11px] text-[#8b847c]">
+                Help when you need it
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-8">
+          <Link
+            href="/products"
+            className="group inline-flex items-center gap-2 text-[13px] font-black tracking-[0.02em] text-[#4d4741] transition hover:text-[#ff7200]"
+          >
+            <IconArrowLeft
+              size={17}
+              className="transition group-hover:-translate-x-1"
+            />
+            Continue Shopping
+          </Link>
         </div>
-      </section>
+      </div>
     </main>
   );
 }

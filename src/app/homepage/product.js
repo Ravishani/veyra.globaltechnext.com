@@ -1,12 +1,7 @@
 "use client";
 
-import React, {
-  useEffect,
-  useState,
-} from "react";
-
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-
 import {
   IconAlertCircle,
   IconArrowRight,
@@ -14,328 +9,225 @@ import {
   IconCircleCheck,
   IconHeart,
   IconInfoCircle,
+  IconPackage,
   IconRefresh,
+  IconShieldCheck,
   IconShoppingBag,
   IconShoppingCart,
   IconStar,
-  IconX,
-  IconPackage,
   IconTruck,
-  IconShieldCheck,
+  IconX,
 } from "@tabler/icons-react";
-
 import { useCart } from "../context/CartContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-function formatNumber(
-  value,
-  maximumFractionDigits = 2
-) {
-  return Number(value || 0).toLocaleString(
-    "en-IN",
-    {
-      minimumFractionDigits: 2,
-      maximumFractionDigits,
-    }
-  );
-}
+const formatNumber = (value, maximumFractionDigits = 2) => {
+  const number = Number(value);
 
-function getPlainText(html = "") {
-  if (!html) {
-    return "";
+  if (!Number.isFinite(number)) {
+    return "0.00";
   }
 
-  return html
+  return number.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits,
+  });
+};
+
+const getPlainText = (html = "") => {
+  return String(html)
     .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
     .replace(/\s+/g, " ")
     .trim();
-}
+};
 
-function getImageUrl(image) {
+const getImageUrl = (image) => {
   if (!image) {
-    return null;
+    return "/placeholder-product.png";
   }
 
   const imageValue = String(image).trim();
 
-  if (!imageValue) {
-    return null;
-  }
-
   if (
     imageValue.startsWith("http://") ||
-    imageValue.startsWith("https://")
+    imageValue.startsWith("https://") ||
+    imageValue.startsWith("data:")
   ) {
     return imageValue;
   }
 
-  const laravelUrl = API_URL
+  const baseUrl = API_URL
     ?.replace(/\/api\/?$/, "")
     .replace(/\/+$/, "");
 
-  if (!laravelUrl) {
-    return null;
+  if (!baseUrl) {
+    return `/${imageValue.replace(/^\/+/, "")}`;
   }
 
-  return `${laravelUrl}/${imageValue.replace(
-    /^\/+/,
-    ""
-  )}`;
-}
+  return `${baseUrl}/${imageValue.replace(/^\/+/, "")}`;
+};
 
-function Toast({ toast, onClose }) {
+const Toast = ({ toast, onClose }) => {
   if (!toast) {
     return null;
   }
 
-  const isSuccess = toast.type === "success";
-  const isError = toast.type === "error";
+  const styles = {
+    success: {
+      icon: <IconCircleCheck size={22} />,
+      wrapper: "border-[#cddfc9] bg-[#f3f8f1] text-[#41553b]",
+      iconBg: "bg-[#dfeedd]",
+    },
+    error: {
+      icon: <IconAlertCircle size={22} />,
+      wrapper: "border-[#ead0cb] bg-[#fbf3f1] text-[#74443b]",
+      iconBg: "bg-[#f2dfda]",
+    },
+    info: {
+      icon: <IconInfoCircle size={22} />,
+      wrapper: "border-[#ddd8ca] bg-[#f8f6ef] text-[#5e584b]",
+      iconBg: "bg-[#ebe7da]",
+    },
+  };
+
+  const currentStyle = styles[toast.type] || styles.info;
 
   return (
-    <div className="fixed right-4 top-4 z-[100000] w-[calc(100%-32px)] max-w-[390px] sm:right-6 sm:top-6">
-      <div className="overflow-hidden rounded-2xl border border-white bg-white shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-        <div className="flex items-start gap-3 p-4">
-          <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-              isSuccess
-                ? "bg-emerald-50 text-emerald-600"
-                : isError
-                  ? "bg-red-50 text-red-600"
-                  : "bg-blue-50 text-blue-600"
-            }`}
-          >
-            {isSuccess ? (
-              <IconCircleCheck size={19} />
-            ) : isError ? (
-              <IconAlertCircle size={19} />
-            ) : (
-              <IconInfoCircle size={19} />
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-black text-[#292721]">
-              {toast.title}
-            </p>
-
-            <p className="mt-1 text-[10px] leading-4 text-[#858078]">
-              {toast.message}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#99938a] transition hover:bg-[#f5f2ec] hover:text-[#292721]"
-          >
-            <IconX size={14} />
-          </button>
+    <div className="fixed right-4 top-4 z-[100] w-[calc(100%-2rem)] max-w-[390px] animate-[toastIn_0.3s_ease-out] sm:right-6 sm:top-6">
+      <div
+        className={`flex items-start gap-3 rounded-[18px] border p-4 shadow-[0_18px_50px_rgba(41,39,33,0.14)] backdrop-blur-xl ${currentStyle.wrapper}`}
+      >
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${currentStyle.iconBg}`}
+        >
+          {currentStyle.icon}
         </div>
 
-        <div
-          className={`h-1 ${
-            isSuccess
-              ? "bg-emerald-500"
-              : isError
-                ? "bg-red-500"
-                : "bg-blue-500"
-          }`}
-        />
+        <div className="min-w-0 flex-1">
+          <p className="text-[14px] font-bold tracking-[-0.01em]">
+            {toast.title}
+          </p>
+
+          {toast.message && (
+            <p className="mt-1 text-[13px] leading-5 opacity-80">
+              {toast.message}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition hover:bg-black/5"
+          aria-label="Close notification"
+        >
+          <IconX size={17} />
+        </button>
       </div>
     </div>
   );
-}
+};
 
-function ProductSkeleton() {
+const ProductSkeleton = () => {
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 8 }).map(
-        (_, index) => (
-          <div
-            key={index}
-            className="overflow-hidden rounded-[26px] border border-[#e6e1d8] bg-white"
-          >
-            <div className="aspect-square animate-pulse bg-[#eeeae3]" />
+    <div className="overflow-hidden rounded-[24px] border border-[#e8e4da] bg-white">
+      <div className="aspect-[1.15/1] animate-pulse bg-[#ebe8e0]" />
 
-            <div className="space-y-3 p-5">
-              <div className="h-2.5 w-20 animate-pulse rounded-full bg-[#eeeae3]" />
-
-              <div className="h-5 w-4/5 animate-pulse rounded-full bg-[#eeeae3]" />
-
-              <div className="h-5 w-3/5 animate-pulse rounded-full bg-[#eeeae3]" />
-
-              <div className="h-7 w-32 animate-pulse rounded-full bg-[#eeeae3]" />
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="h-11 animate-pulse rounded-xl bg-[#eeeae3]" />
-                <div className="h-11 animate-pulse rounded-xl bg-[#eeeae3]" />
-              </div>
-            </div>
-          </div>
-        )
-      )}
+      <div className="space-y-3 p-5">
+        <div className="h-3 w-20 animate-pulse rounded-full bg-[#ebe8e0]" />
+        <div className="h-5 w-4/5 animate-pulse rounded-full bg-[#ebe8e0]" />
+        <div className="h-3 w-full animate-pulse rounded-full bg-[#ebe8e0]" />
+        <div className="h-3 w-3/4 animate-pulse rounded-full bg-[#ebe8e0]" />
+        <div className="h-6 w-28 animate-pulse rounded-full bg-[#ebe8e0]" />
+        <div className="h-10 w-full animate-pulse rounded-xl bg-[#ebe8e0]" />
+      </div>
     </div>
   );
-}
+};
 
 export default function ProductsPage() {
-  const {
-    cartItems,
-    addToCart: addProductToCart,
-  } = useCart();
+  const { cartItems, addToCart: addProductToCart } = useCart();
 
-  const [products, setProducts] =
-    useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [addedProduct, setAddedProduct] = useState(null);
+  const [wishlist, setWishlist] = useState([]);
+  const [toast, setToast] = useState(null);
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [addedProduct, setAddedProduct] =
-    useState(null);
-
-  const [wishlist, setWishlist] =
-    useState([]);
-
-  const [toast, setToast] =
-    useState(null);
-
-  const showToast = (
-    type,
-    title,
-    message
-  ) => {
+  const showToast = (type, title, message = "") => {
     setToast({
       type,
       title,
       message,
     });
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setToast(null);
     }, 4000);
   };
 
-  useEffect(() => {
-    const savedWishlist =
-      localStorage.getItem(
-        "wishlist"
-      );
-
-    if (savedWishlist) {
-      try {
-        const parsedWishlist =
-          JSON.parse(savedWishlist);
-
-        setWishlist(
-          Array.isArray(parsedWishlist)
-            ? parsedWishlist
-            : []
-        );
-      } catch {
-        setWishlist([]);
-      }
-    }
-
-    fetchProducts();
-  }, []);
-
   const fetchProducts = async () => {
+    setLoading(true);
+    setError("");
+
     try {
-      setLoading(true);
-      setError("");
-
       if (!API_URL) {
-        throw new Error(
-          "NEXT_PUBLIC_API_URL is not configured."
-        );
+        throw new Error("API URL is not configured.");
       }
-
-      const apiUrl = API_URL.replace(
-        /\/+$/,
-        ""
-      );
-
-      const productsUrl = `${apiUrl}/products`;
 
       const response = await fetch(
-        productsUrl,
+        `${API_URL.replace(/\/+$/, "")}/products`,
         {
           method: "GET",
-          cache: "no-store",
           headers: {
             Accept: "application/json",
           },
+          cache: "no-store",
         }
       );
 
       const contentType =
-        response.headers.get(
-          "content-type"
-        ) || "";
+        response.headers.get("content-type") || "";
 
-      if (
-        !contentType
-          .toLowerCase()
-          .includes("application/json")
-      ) {
-        const text =
-          await response.text();
+      if (!contentType.includes("application/json")) {
+        throw new Error("Invalid response received from server.");
+      }
 
-        console.error(
-          "Products API returned non-JSON:",
-          {
-            url: productsUrl,
-            status: response.status,
-            statusText:
-              response.statusText,
-            contentType,
-            response:
-              text.substring(0, 500),
-          }
-        );
+      const data = await response.json();
 
+      if (!response.ok) {
         throw new Error(
-          `API returned ${response.status} ${response.statusText} instead of JSON.`
+          data?.message || "Unable to load products right now."
         );
       }
 
-      const data =
-        await response.json();
-
-      if (
-        !response.ok ||
-        data?.status !== true
-      ) {
+      if (data?.status === false) {
         throw new Error(
-          data?.message ||
-            "Unable to fetch products."
+          data?.message || "Unable to load products right now."
         );
       }
 
-      setProducts(
-        Array.isArray(data?.data)
+      const productList = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
           ? data.data
-          : []
-      );
-    } catch (err) {
-      console.error(
-        "Products API Error:",
-        err
-      );
+          : Array.isArray(data?.products)
+            ? data.products
+            : [];
 
+      setProducts(productList);
+    } catch (err) {
       setProducts([]);
 
       const message =
         err?.message ||
-        "Unable to load products.";
+        "Something went wrong while loading products.";
 
       setError(message);
 
@@ -349,214 +241,216 @@ export default function ProductsPage() {
     }
   };
 
-  const getDiscount = (product) => {
-    const price = Number(
-      product?.price || 0
-    );
+  useEffect(() => {
+    try {
+      const savedWishlist = localStorage.getItem("wishlist");
 
-    const discountPrice = Number(
-      product?.discount_price || 0
-    );
+      if (savedWishlist) {
+        const parsedWishlist = JSON.parse(savedWishlist);
+
+        if (Array.isArray(parsedWishlist)) {
+          setWishlist(parsedWishlist);
+        }
+      }
+    } catch {
+      setWishlist([]);
+    }
+
+    fetchProducts();
+  }, []);
+
+  const getDiscount = (product) => {
+    const price = Number(product?.price);
+    const discountPrice = Number(product?.discount_price);
 
     if (
-      !discountPrice ||
-      !price ||
+      !Number.isFinite(price) ||
+      !Number.isFinite(discountPrice) ||
+      price <= 0 ||
+      discountPrice <= 0 ||
       discountPrice >= price
     ) {
       return 0;
     }
 
     return Math.round(
-      ((price - discountPrice) /
-        price) *
-        100
+      ((price - discountPrice) / price) * 100
     );
   };
 
-  const getProductPrice = (
-    product
-  ) => {
-    const price = Number(
-      product?.price || 0
-    );
-
-    const discountPrice = Number(
-      product?.discount_price || 0
-    );
+  const getProductPrice = (product) => {
+    const price = Number(product?.price);
+    const discountPrice = Number(product?.discount_price);
 
     if (
+      Number.isFinite(discountPrice) &&
       discountPrice > 0 &&
+      Number.isFinite(price) &&
       discountPrice < price
     ) {
       return discountPrice;
     }
 
-    return price;
+    return Number.isFinite(price) ? price : 0;
+  };
+
+  const getProductId = (product) => {
+    return (
+      product?.id ??
+      product?._id ??
+      product?.product_id
+    );
+  };
+
+  const isProductInCart = (product) => {
+    const productId = getProductId(product);
+
+    return cartItems?.some(
+      (item) =>
+        String(item?.id ?? item?.product_id) ===
+        String(productId)
+    );
   };
 
   const addToCart = (product) => {
-    if (!product) {
-      return;
-    }
+    try {
+      addProductToCart(product);
 
-    const existingProduct =
-      cartItems.find(
-        (item) =>
-          Number(item.id) ===
-          Number(product.id)
-      );
+      const productId = getProductId(product);
 
-    addProductToCart(product);
+      setAddedProduct(productId);
 
-    if (existingProduct) {
-      showToast(
-        "success",
-        "Cart updated",
-        `${product.name} quantity has been increased.`
-      );
-    } else {
       showToast(
         "success",
         "Added to cart",
-        `${product.name} has been added to your cart.`
+        `${product?.name || "Product"} has been added to your cart.`
+      );
+
+      window.setTimeout(() => {
+        setAddedProduct(null);
+      }, 1500);
+    } catch (err) {
+      showToast(
+        "error",
+        "Unable to add product",
+        err?.message || "Please try again."
       );
     }
-
-    setAddedProduct(
-      product.id
-    );
-
-    setTimeout(() => {
-      setAddedProduct(null);
-    }, 1500);
   };
 
-  const toggleWishlist = (
-    product
-  ) => {
-    const exists =
-      wishlist.some(
-        (id) =>
-          Number(id) ===
-          Number(product.id)
-      );
+  const toggleWishlist = (product) => {
+    const productId = getProductId(product);
 
-    let updatedWishlist;
-
-    if (exists) {
-      updatedWishlist =
-        wishlist.filter(
-          (id) =>
-            Number(id) !==
-            Number(product.id)
-        );
-
-      showToast(
-        "info",
-        "Removed from wishlist",
-        `${product.name} was removed from your wishlist.`
-      );
-    } else {
-      updatedWishlist = [
-        ...wishlist,
-        product.id,
-      ];
-
-      showToast(
-        "success",
-        "Added to wishlist",
-        `${product.name} was added to your wishlist.`
-      );
+    if (!productId) {
+      return;
     }
 
-    setWishlist(
-      updatedWishlist
-    );
+    setWishlist((current) => {
+      const exists = current.some(
+        (id) => String(id) === String(productId)
+      );
 
-    localStorage.setItem(
-      "wishlist",
-      JSON.stringify(
-        updatedWishlist
-      )
-    );
+      const updated = exists
+        ? current.filter(
+            (id) => String(id) !== String(productId)
+          )
+        : [...current, productId];
+
+      try {
+        localStorage.setItem(
+          "wishlist",
+          JSON.stringify(updated)
+        );
+      } catch {}
+
+      if (exists) {
+        showToast(
+          "info",
+          "Removed from wishlist",
+          `${product?.name || "Product"} was removed from your wishlist.`
+        );
+      } else {
+        showToast(
+          "success",
+          "Added to wishlist",
+          `${product?.name || "Product"} was added to your wishlist.`
+        );
+      }
+
+      return updated;
+    });
   };
 
   return (
     <>
+    
+
       <Toast
         toast={toast}
-        onClose={() =>
-          setToast(null)
-        }
+        onClose={() => setToast(null)}
       />
 
-      <main className="min-h-screen bg-[#f8f7f3]">
-        <section className="relative overflow-hidden border-b border-[#e6e1d8]">
-          <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-[var(--primary)]/10 blur-3xl" />
+      <main className="min-h-screen bg-[#f8f7f3] text-[#292721]">
+        <section className="relative overflow-hidden border-b border-[#e5e1d8] bg-[#efede7]">
+          <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-[#d9d3c4]/60 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-32 right-0 h-72 w-72 rounded-full bg-[#ded8c9]/70 blur-3xl" />
 
-          <div className="absolute -bottom-60 -left-40 h-[500px] w-[500px] rounded-full bg-[#ded8cd]/30 blur-3xl" />
-
-          <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-12 sm:px-6 sm:pb-14 sm:pt-16 lg:px-8 lg:pb-16 lg:pt-20">
-            <div className="max-w-[720px]">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#ded8cc] bg-white px-3.5 py-2 shadow-sm">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute h-full w-full animate-ping rounded-full bg-[var(--primary)] opacity-50" />
-
-                  <span className="relative h-2 w-2 rounded-full bg-[var(--primary)]" />
-                </span>
+          <div className="relative mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-10 lg:py-24">
+            <div className="max-w-4xl">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#d8d2c5] bg-white/70 px-4 py-2 backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-[var(--primary)]" />
 
                 <span className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#716c63]">
                   Premium Collection
                 </span>
               </div>
 
-              <h1 className="text-[44px] font-black leading-[1.02] tracking-[-0.055em] text-[#20201c] sm:text-[58px] lg:text-[70px]">
+              <h1 className="max-w-3xl text-[44px] font-black leading-[1.02] tracking-[-0.055em] text-[#20201c] sm:text-[58px] lg:text-[70px]">
                 Discover products
-                <br />
-                <span className="text-[var(--primary)]">
+                <span className="block text-[var(--primary)]">
                   made for you.
                 </span>
               </h1>
 
-              <p className="mt-6 max-w-[610px] text-[13px] leading-7 text-[#77736b] sm:text-[15px] sm:leading-8">
-                Explore our carefully
-                selected collection of
-                quality products,
-                transparent pricing and
-                a simple premium shopping
-                experience.
+              <p className="mt-6 max-w-2xl text-[13px] leading-7 tracking-[0.01em] text-[#77736b] sm:text-[15px] sm:leading-8">
+                Explore our carefully selected collection of quality
+                products, designed to make your shopping experience
+                simple, smooth and reliable.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <div className="flex items-center gap-2 rounded-full border border-[#e1ddd5] bg-white px-4 py-2.5">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#ddd8cc] bg-white/75 px-4 py-2.5">
                   <IconShieldCheck
-                    size={14}
+                    size={17}
+                    stroke={1.8}
                     className="text-[var(--primary)]"
                   />
 
-                  <span className="text-[9px] font-bold text-[#625e57]">
+                  <span className="text-[9px] font-bold tracking-[0.02em] text-[#625e57]">
                     Quality Assured
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 rounded-full border border-[#e1ddd5] bg-white px-4 py-2.5">
-                  <IconTruck
-                    size={14}
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#ddd8cc] bg-white/75 px-4 py-2.5">
+                  <IconShoppingBag
+                    size={17}
+                    stroke={1.8}
                     className="text-[var(--primary)]"
                   />
 
-                  <span className="text-[9px] font-bold text-[#625e57]">
+                  <span className="text-[9px] font-bold tracking-[0.02em] text-[#625e57]">
                     Easy Shopping
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 rounded-full border border-[#e1ddd5] bg-white px-4 py-2.5">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#ddd8cc] bg-white/75 px-4 py-2.5">
                   <IconPackage
-                    size={14}
+                    size={17}
+                    stroke={1.8}
                     className="text-[var(--primary)]"
                   />
 
-                  <span className="text-[9px] font-bold text-[#625e57]">
+                  <span className="text-[9px] font-bold tracking-[0.02em] text-[#625e57]">
                     Premium Products
                   </span>
                 </div>
@@ -565,387 +459,378 @@ export default function ProductsPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-          <div className="mb-7 flex flex-col gap-4 border-b border-[#e2ddd4] pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-14 lg:px-10">
+          <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[#aaa49a]">
-                Product Collection
-              </p>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="h-1.5 w-8 rounded-full bg-[var(--primary)]" />
 
-              <div className="mt-1 flex items-center gap-2">
-                <h2 className="text-[18px] font-black tracking-[-0.03em] text-[#292721]">
-                  Shop Products
-                </h2>
-
-                {!loading && (
-                  <span className="rounded-full bg-[#ebe7df] px-2 py-1 text-[8px] font-black text-[#777168]">
-                    {products.length}
-                  </span>
-                )}
+                <span className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[#aaa49a]">
+                  Our Collection
+                </span>
               </div>
+
+              <h2 className="text-[30px] font-black tracking-[-0.035em] text-[#292721] sm:text-[36px]">
+                Shop Products
+              </h2>
+
+              {!loading && !error && (
+                <p className="mt-2 text-[12px] tracking-[0.01em] text-[#817b6d]">
+                  {products.length}{" "}
+                  {products.length === 1
+                    ? "product"
+                    : "products"}{" "}
+                  available
+                </p>
+              )}
             </div>
           </div>
 
           {loading && (
-            <ProductSkeleton />
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 8 }).map(
+                (_, index) => (
+                  <ProductSkeleton key={index} />
+                )
+              )}
+            </div>
           )}
 
           {!loading && error && (
-            <div className="flex min-h-[400px] items-center justify-center">
-              <div className="w-full max-w-[440px] rounded-[28px] border border-red-100 bg-white p-8 text-center shadow-[0_20px_60px_rgba(35,32,27,0.06)]">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-500">
-                  <IconAlertCircle
-                    size={28}
-                  />
-                </div>
-
-                <h2 className="mt-5 text-[21px] font-black text-[#292721]">
-                  Products
-                  unavailable
-                </h2>
-
-                <p className="mt-2 text-[10px] leading-5 text-[#858078]">
-                  {error}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={
-                    fetchProducts
-                  }
-                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-[var(--primary)] px-5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--primary-hover)]"
-                >
-                  <IconRefresh
-                    size={14}
-                  />
-
-                  Retry
-                </button>
+            <div className="rounded-[24px] border border-[#e4ded1] bg-white px-6 py-14 text-center shadow-[0_8px_30px_rgba(41,39,33,0.04)]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f3eee6] text-[#766f61]">
+                <IconAlertCircle
+                  size={27}
+                  stroke={1.7}
+                />
               </div>
+
+              <h3 className="mt-5 text-[21px] font-black tracking-[-0.02em] text-[#292721]">
+                Unable to load products
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-md text-[13px] leading-6 text-[#777164]">
+                {error}
+              </p>
+
+              <button
+                type="button"
+                onClick={fetchProducts}
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#292721] px-6 py-3 text-[9px] font-extrabold uppercase tracking-[0.1em] text-white transition hover:bg-[var(--primary)]"
+              >
+                <IconRefresh size={16} />
+                Try Again
+              </button>
             </div>
           )}
 
           {!loading &&
             !error &&
             products.length === 0 && (
-              <div className="flex min-h-[400px] items-center justify-center">
-                <div className="text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-[#aaa59c] shadow-sm">
-                    <IconShoppingBag
-                      size={30}
-                    />
-                  </div>
-
-                  <h2 className="mt-5 text-[20px] font-black text-[#292721]">
-                    No products found
-                  </h2>
-
-                  <p className="mt-2 text-[10px] text-[#858078]">
-                    Products will
-                    appear here once
-                    they are added.
-                  </p>
+              <div className="rounded-[24px] border border-[#e4ded1] bg-white px-6 py-14 text-center shadow-[0_8px_30px_rgba(41,39,33,0.04)]">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f3eee6] text-[#766f61]">
+                  <IconPackage
+                    size={27}
+                    stroke={1.7}
+                  />
                 </div>
+
+                <h3 className="mt-5 text-[21px] font-black tracking-[-0.02em] text-[#292721]">
+                  No products found
+                </h3>
+
+                <p className="mt-2 text-[13px] text-[#777164]">
+                  There are currently no products available.
+                </p>
               </div>
             )}
 
           {!loading &&
             !error &&
             products.length > 0 && (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {products.map(
-                  (product) => {
-                    const discount =
-                      getDiscount(
-                        product
-                      );
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {products.map((product) => {
+                  const productId = getProductId(product);
+                  const discount = getDiscount(product);
+                  const currentPrice = getProductPrice(product);
+                  const originalPrice = Number(product?.price);
 
-                    const currentPrice =
-                      getProductPrice(
-                        product
-                      );
+                  const isWishlisted = wishlist.some(
+                    (id) =>
+                      String(id) === String(productId)
+                  );
 
-                    const imageUrl =
-                      getImageUrl(
-                        product.image
-                      );
+                  const isAdded =
+                    String(addedProduct) ===
+                    String(productId);
 
-                    const isAdded =
-                      addedProduct ===
-                      product.id;
+                  const inCart =
+                    isProductInCart(product);
 
-                    const isWishlisted =
-                      wishlist.some(
-                        (id) =>
-                          Number(id) ===
-                          Number(
-                            product.id
-                          )
-                      );
+                  const description = getPlainText(
+                    product?.short_description ||
+                      product?.description ||
+                      product?.details ||
+                      ""
+                  );
 
-                    const description =
-                      getPlainText(
-                        product.description
-                      );
+                  return (
+                    <article
+                      key={
+                        productId ||
+                        product?.slug ||
+                        product?.name
+                      }
+                      className="group overflow-hidden rounded-[24px] border border-[#e5e1d8] bg-white shadow-[0_7px_26px_rgba(41,39,33,0.055)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_38px_rgba(41,39,33,0.10)]"
+                    >
+                      <div className="relative aspect-[1.15/1] overflow-hidden bg-[#f2f0ea]">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.85),transparent_68%)]" />
 
-                    const cartItem =
-                      cartItems.find(
-                        (item) =>
-                          Number(
-                            item.id
-                          ) ===
-                          Number(
-                            product.id
-                          )
-                      );
+                        {discount > 0 && (
+                          <div className="absolute left-4 top-4 z-10 rounded-full bg-[var(--primary)] px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.08em] text-white shadow-sm">
+                            -{discount}% OFF
+                          </div>
+                        )}
 
-                    return (
-                      <article
-                        key={
-                          product.id
-                        }
-                        className="group relative overflow-hidden rounded-[26px] border border-[#e2ded6] bg-white shadow-[0_15px_50px_rgba(35,32,27,0.055)] transition-all duration-500 hover:-translate-y-1.5 hover:border-[var(--primary)]/30 hover:shadow-[0_28px_70px_rgba(35,32,27,0.12)]"
-                      >
-                        <div className="relative aspect-square overflow-hidden bg-[#f1eee8]">
-                          {imageUrl ? (
-                            <img
-                              src={
-                                imageUrl
-                              }
-                              alt={
-                                product.name ||
-                                "Product"
-                              }
-                              loading="lazy"
-                              className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.06]"
-                              onError={(
-                                event
-                              ) => {
-                                console.error(
-                                  "Laravel image failed:",
-                                  imageUrl
-                                );
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleWishlist(product)
+                          }
+                          className={`absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md transition-all ${
+                            isWishlisted
+                              ? "border-[#d7c6a7] bg-[#292721] text-white"
+                              : "border-white/80 bg-white/85 text-[#5d584d] hover:bg-white hover:text-[var(--primary)]"
+                          }`}
+                          aria-label={
+                            isWishlisted
+                              ? "Remove from wishlist"
+                              : "Add to wishlist"
+                          }
+                        >
+                          <IconHeart
+                            size={17}
+                            stroke={1.8}
+                            fill={
+                              isWishlisted
+                                ? "currentColor"
+                                : "none"
+                            }
+                          />
+                        </button>
 
-                                event.currentTarget.style.display =
-                                  "none";
-                              }}
+                        {product?.category?.name && (
+                          <div className="absolute bottom-4 left-4 z-10 rounded-full border border-white/70 bg-white/85 px-3 py-1.5 text-[8px] font-extrabold uppercase tracking-[0.12em] text-[#5d584d] backdrop-blur-md">
+                            {product.category.name}
+                          </div>
+                        )}
+
+                        <img
+                          src={getImageUrl(
+                            product?.image ||
+                              product?.image_url ||
+                              product?.thumbnail
+                          )}
+                          alt={
+                            product?.name ||
+                            "Product"
+                          }
+                          className="relative h-full w-full object-contain p-6 transition-transform duration-500 group-hover:scale-[1.045]"
+                          loading="lazy"
+                          onError={(event) => {
+                            event.currentTarget.src =
+                              "/placeholder-product.png";
+                          }}
+                        />
+                      </div>
+
+                      <div className="p-5">
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <span className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-[var(--primary)]">
+                            {product?.category?.name ||
+                              product?.category_name ||
+                              "Product"}
+                          </span>
+
+                          {product?.sku && (
+                            <span className="text-[9px] font-medium tracking-[0.02em] text-[#aaa49a]">
+                              SKU {product.sku}
+                            </span>
+                          )}
+                        </div>
+
+                        <Link
+                          href={`/products/${
+                            product?.slug ||
+                            productId
+                          }`}
+                          className="block"
+                        >
+                          <h3 className="line-clamp-2 text-[17px] font-black leading-6 tracking-[-0.025em] text-[#292721] transition-colors group-hover:text-[var(--primary)]">
+                            {product?.name ||
+                              "Untitled Product"}
+                          </h3>
+                        </Link>
+
+                        <div className="mt-2 flex items-center gap-1">
+                          {Array.from({
+                            length: 5,
+                          }).map((_, index) => (
+                            <IconStar
+                              key={index}
+                              size={13}
+                              stroke={1.6}
+                              fill="currentColor"
+                              className="text-[#d6b76e]"
                             />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <IconShoppingBag
-                                size={65}
-                                className="text-[#d0cbc2]"
-                              />
-                            </div>
-                          )}
+                          ))}
 
-                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/15 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                          <span className="ml-1 text-[9px] font-medium tracking-[0.03em] text-[#8b8578]">
+                            5.0
+                          </span>
+                        </div>
 
-                          {discount >
-                            0 && (
-                            <div className="absolute left-4 top-4 rounded-full bg-[var(--primary)] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-white shadow-lg">
-                              {discount}% OFF
-                            </div>
-                          )}
+                        {description && (
+                          <p className="mt-3 line-clamp-2 text-[10px] leading-5 tracking-[0.01em] text-[#858078]">
+                            {description}
+                          </p>
+                        )}
 
-                          {product.category && (
-                            <div className="absolute bottom-4 left-4 rounded-full border border-white/70 bg-white/90 px-3 py-1.5 backdrop-blur-md">
-                              <span className="text-[7px] font-black uppercase tracking-[0.14em] text-[#625e57]">
-                                {
-                                  product
-                                    .category
-                                    .name
-                                }
+                        <div className="mt-4 flex items-end gap-2">
+                          <span className="text-[23px] font-black leading-none tracking-[-0.045em] text-[#292721]">
+                            {formatNumber(currentPrice)}
+                          </span>
+
+                          {discount > 0 &&
+                            Number.isFinite(originalPrice) &&
+                            originalPrice > currentPrice && (
+                              <span className="mb-0.5 text-[11px] font-medium tracking-[0.01em] text-[#9b9589] line-through">
+                                {formatNumber(originalPrice)}
                               </span>
-                            </div>
-                          )}
+                            )}
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+                          <Link
+                            href={`/products/${
+                              product?.slug ||
+                              productId
+                            }`}
+                            className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-[#ddd8ce] bg-white px-3 text-[8px] font-extrabold uppercase tracking-[0.08em] text-[#4d493f] transition hover:border-[var(--primary)] hover:bg-[#faf8f3] hover:text-[var(--primary)]"
+                          >
+                            Details
+
+                            <IconArrowRight
+                              size={14}
+                              stroke={1.8}
+                            />
+                          </Link>
 
                           <button
                             type="button"
                             onClick={() =>
-                              toggleWishlist(
-                                product
-                              )
+                              addToCart(product)
                             }
-                            className={`absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border shadow-md backdrop-blur-md transition ${
-                              isWishlisted
-                                ? "border-red-100 bg-red-50 text-red-500"
-                                : "border-white/80 bg-white/95 text-[#716c63] hover:border-[var(--primary)] hover:text-[var(--primary)]"
+                            className={`relative flex h-10 min-w-[112px] items-center justify-center gap-1.5 rounded-xl px-3 text-[8px] font-extrabold uppercase tracking-[0.08em] transition-all ${
+                              isAdded || inCart
+                                ? "bg-[var(--primary)] text-white shadow-[0_6px_18px_rgba(89,107,69,0.18)]"
+                                : "bg-[#292721] text-white hover:bg-[var(--primary)]"
                             }`}
-                            aria-label={
-                              isWishlisted
-                                ? "Remove from wishlist"
-                                : "Add to wishlist"
-                            }
                           >
-                            <IconHeart
-                              size={17}
-                              fill={
-                                isWishlisted
-                                  ? "currentColor"
-                                  : "none"
-                              }
-                            />
+                            {isAdded ? (
+                              <>
+                                <IconCheck
+                                  size={15}
+                                  stroke={2.2}
+                                />
+                                Added
+                              </>
+                            ) : inCart ? (
+                              <>
+                                <IconShoppingCart
+                                  size={15}
+                                  stroke={1.9}
+                                />
+                                In Cart
+                              </>
+                            ) : (
+                              <>
+                                <IconShoppingCart
+                                  size={15}
+                                  stroke={1.9}
+                                />
+                                Add to Cart
+                              </>
+                            )}
                           </button>
                         </div>
-
-                        <div className="p-5">
-                          {product.category && (
-                            <p className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-[var(--primary)]">
-                              {
-                                product
-                                  .category
-                                  .name
-                              }
-                            </p>
-                          )}
-
-                          <h2 className="mt-2 min-h-[48px] line-clamp-2 text-[17px] font-black leading-6 tracking-[-0.025em] text-[#292721] transition-colors group-hover:text-[#181713]">
-                            {
-                              product.name
-                            }
-                          </h2>
-
-                          <div className="mt-3 flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <div className="flex gap-0.5 text-[#d6b76e]">
-                                {[
-                                  1,
-                                  2,
-                                  3,
-                                  4,
-                                  5,
-                                ].map(
-                                  (
-                                    star
-                                  ) => (
-                                    <IconStar
-                                      key={
-                                        star
-                                      }
-                                      size={
-                                        12
-                                      }
-                                      fill="currentColor"
-                                    />
-                                  )
-                                )}
-                              </div>
-
-                              <span className="ml-1 text-[8px] font-bold text-[#aaa59c]">
-                                5.0
-                              </span>
-                            </div>
-
-                            {product.sku && (
-                              <span className="max-w-[90px] truncate text-[7px] font-bold uppercase tracking-[0.08em] text-[#aaa49a]">
-                                SKU:{" "}
-                                {
-                                  product.sku
-                                }
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="mt-4 flex items-end gap-2">
-                            <span className="text-[23px] font-black tracking-[-0.045em] text-[#292721]">
-                              ₹
-                              {formatNumber(
-                                currentPrice,
-                                2
-                              )}
-                            </span>
-
-                            {discount >
-                              0 && (
-                              <span className="pb-1 text-[10px] font-bold text-[#aaa59c] line-through">
-                                ₹
-                                {formatNumber(
-                                  product.price,
-                                  2
-                                )}
-                              </span>
-                            )}
-                          </div>
-
-                          {description && (
-                            <p className="mt-3 min-h-[32px] line-clamp-2 text-[9px] leading-4 text-[#858078]">
-                              {
-                                description
-                              }
-                            </p>
-                          )}
-
-                          <div className="mt-5 grid grid-cols-2 gap-2.5">
-                            <Link
-                              href={`/products/${product.slug}`}
-                              className="group/details flex h-11 items-center justify-center gap-1.5 rounded-xl border border-[#ded9d1] bg-white text-[8px] font-extrabold uppercase tracking-[0.08em] text-[#625e56] transition hover:border-[var(--primary)] hover:bg-[#fffaf2] hover:text-[var(--primary)]"
-                            >
-                              View Details
-
-                              <IconArrowRight
-                                size={
-                                  13
-                                }
-                                className="transition-transform group-hover/details:translate-x-0.5"
-                              />
-                            </Link>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                addToCart(
-                                  product
-                                )
-                              }
-                              className={`relative flex h-11 items-center justify-center gap-1.5 rounded-xl text-[8px] font-extrabold uppercase tracking-[0.08em] text-white shadow-sm transition ${
-                                isAdded
-                                  ? "bg-emerald-600"
-                                  : "bg-[var(--primary)] hover:bg-[var(--primary-hover)]"
-                              }`}
-                            >
-                              {isAdded ? (
-                                <>
-                                  <IconCheck
-                                    size={
-                                      14
-                                    }
-                                  />
-
-                                  Added
-                                </>
-                              ) : (
-                                <>
-                                  <IconShoppingCart
-                                    size={
-                                      14
-                                    }
-                                  />
-
-                                  Add to Cart
-                                </>
-                              )}
-
-                              {cartItem &&
-                                Number(
-                                  cartItem.quantity
-                                ) >
-                                  0 && (
-                                  <span className="absolute -right-1 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full border-2 border-white bg-[#171816] px-1 text-[7px] font-black text-white">
-                                    {
-                                      cartItem.quantity
-                                    }
-                                  </span>
-                                )}
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  }
-                )}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
+        </section>
+
+        <section className="border-t border-[#e5e1d8] bg-[#eeece6]">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-5 py-10 sm:grid-cols-3 sm:px-8 lg:px-10">
+            <div className="flex items-center gap-4 rounded-[20px] border border-[#ddd8cc] bg-white/65 p-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e4e9df] text-[var(--primary)]">
+                <IconTruck
+                  size={21}
+                  stroke={1.7}
+                />
+              </div>
+
+              <div>
+                <p className="text-[12px] font-black tracking-[-0.01em] text-[#292721]">
+                  Reliable Delivery
+                </p>
+
+                <p className="mt-1 text-[10px] leading-4 tracking-[0.01em] text-[#7b7569]">
+                  Fast and secure order delivery
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 rounded-[20px] border border-[#ddd8cc] bg-white/65 p-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e4e9df] text-[var(--primary)]">
+                <IconShieldCheck
+                  size={21}
+                  stroke={1.7}
+                />
+              </div>
+
+              <div>
+                <p className="text-[12px] font-black tracking-[-0.01em] text-[#292721]">
+                  Secure Shopping
+                </p>
+
+                <p className="mt-1 text-[10px] leading-4 tracking-[0.01em] text-[#7b7569]">
+                  Safe and protected checkout
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 rounded-[20px] border border-[#ddd8cc] bg-white/65 p-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e4e9df] text-[var(--primary)]">
+                <IconRefresh
+                  size={21}
+                  stroke={1.7}
+                />
+              </div>
+
+              <div>
+                <p className="text-[12px] font-black tracking-[-0.01em] text-[#292721]">
+                  Easy Support
+                </p>
+
+                <p className="mt-1 text-[10px] leading-4 tracking-[0.01em] text-[#7b7569]">
+                  We are here when you need us
+                </p>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
     </>

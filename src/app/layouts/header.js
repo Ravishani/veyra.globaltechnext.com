@@ -2,12 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+
 import {
   IconArrowRight,
   IconArrowsExchange,
   IconChevronDown,
-  IconChevronRight,
   IconChevronLeft,
+  IconChevronRight,
   IconCoin,
   IconCurrencyDollar,
   IconCurrencyEuro,
@@ -122,37 +123,34 @@ const dropdownData = {
 };
 
 function DesktopDropdown({ title, data }) {
+  const allHref =
+    title === "Currencies"
+      ? "/currencies"
+      : title === "Send Money"
+        ? "/send-money"
+        : "/resources";
+
   return (
-    <div
-      className="absolute left-1/2 top-[calc(100%-1px)] z-[3000] w-[620px] -translate-x-1/2 pt-3"
-      onMouseDown={(event) => event.stopPropagation()}
-      onClick={(event) => event.stopPropagation()}
-    >
+    <div className="absolute left-1/2 top-full z-[3000] w-[min(620px,calc(100vw-32px))] -translate-x-1/2 pt-2">
       <div className="overflow-hidden rounded-[22px] border border-[#e6e2db] bg-white shadow-[0_25px_80px_rgba(30,27,22,0.16)]">
         <div className="grid grid-cols-[190px_1fr]">
           <div className="bg-[#171816] p-6 text-white">
-            <span className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]">
+            <span className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-[var(--primary)]">
               Explore
             </span>
 
-            <h3 className="mt-2 text-[24px] font-black tracking-[-0.04em]">
+            <h3 className="mt-2 text-[24px] font-black tracking-[-0.035em]">
               {title}
             </h3>
 
-            <p className="mt-3 text-[10px] leading-5 text-white/40">
+            <p className="mt-3 text-[10px] leading-5 tracking-[0.01em] text-white/40">
               Simple tools and services designed for your global currency
               needs.
             </p>
 
             <Link
-              href={
-                title === "Currencies"
-                  ? "/currencies"
-                  : title === "Send Money"
-                    ? "/send-money"
-                    : "/resources"
-              }
-              className="group mt-7 flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[0.1em] text-[var(--primary)]"
+              href={allHref}
+              className="group mt-7 flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[var(--primary)]"
             >
               View all
 
@@ -166,11 +164,11 @@ function DesktopDropdown({ title, data }) {
           <div className="p-5">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <span className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[var(--primary)]">
+                <span className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]">
                   Services
                 </span>
 
-                <h4 className="mt-1 text-[17px] font-black text-[#292722]">
+                <h4 className="mt-1 text-[17px] font-black tracking-[-0.02em] text-[#292722]">
                   {title}
                 </h4>
               </div>
@@ -199,11 +197,11 @@ function DesktopDropdown({ title, data }) {
                       />
                     </div>
 
-                    <p className="mt-3 text-[11px] font-extrabold text-[#35322c] group-hover:text-[var(--primary)]">
+                    <p className="mt-3 text-[11px] font-extrabold tracking-[0.01em] text-[#35322c] group-hover:text-[var(--primary)]">
                       {item.title}
                     </p>
 
-                    <p className="mt-1 text-[8px] leading-4 text-[#99958d]">
+                    <p className="mt-1 text-[8px] leading-4 tracking-[0.01em] text-[#99958d]">
                       {item.description}
                     </p>
                   </Link>
@@ -214,17 +212,18 @@ function DesktopDropdown({ title, data }) {
         </div>
 
         <div className="flex items-center justify-between border-t border-[#eeeae4] bg-[#faf9f6] px-5 py-3">
-          <div className="flex items-center gap-2 text-[8px] font-semibold text-[#99958d]">
+          <div className="flex items-center gap-2 text-[8px] font-semibold tracking-[0.02em] text-[#99958d]">
             <IconShieldCheck
               size={13}
               className="text-[var(--primary)]"
             />
+
             Secure & transparent platform
           </div>
 
           <Link
             href="/help"
-            className="text-[8px] font-extrabold text-[#69645c] transition hover:text-[var(--primary)]"
+            className="text-[8px] font-extrabold tracking-[0.03em] text-[#69645c] transition hover:text-[var(--primary)]"
           >
             Need help?
           </Link>
@@ -235,16 +234,14 @@ function DesktopDropdown({ title, data }) {
 }
 
 function LoginModal({ open, onClose }) {
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[5000] flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[6000] flex items-center justify-center px-4">
       <button
         type="button"
         onClick={onClose}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/55 backdrop-blur-sm"
         aria-label="Close login"
       />
 
@@ -266,7 +263,7 @@ function LoginModal({ open, onClose }) {
             Welcome back
           </h2>
 
-          <p className="mt-1.5 text-[10px] leading-5 text-white/40">
+          <p className="mt-1.5 text-[10px] leading-5 tracking-[0.01em] text-white/40">
             Sign in to manage your currency tools and transfers.
           </p>
         </div>
@@ -275,7 +272,7 @@ function LoginModal({ open, onClose }) {
           className="p-6 sm:p-8"
           onSubmit={(event) => event.preventDefault()}
         >
-          <label className="mb-2 block text-[10px] font-extrabold text-[#514d46]">
+          <label className="mb-2 block text-[10px] font-extrabold tracking-[0.02em] text-[#514d46]">
             Email address
           </label>
 
@@ -289,7 +286,7 @@ function LoginModal({ open, onClose }) {
             />
           </div>
 
-          <label className="mb-2 mt-5 block text-[10px] font-extrabold text-[#514d46]">
+          <label className="mb-2 mt-5 block text-[10px] font-extrabold tracking-[0.02em] text-[#514d46]">
             Password
           </label>
 
@@ -307,7 +304,7 @@ function LoginModal({ open, onClose }) {
             <Link
               href="/forgot-password"
               onClick={onClose}
-              className="text-[9px] font-extrabold text-[var(--primary)]"
+              className="text-[9px] font-extrabold tracking-[0.02em] text-[var(--primary)]"
             >
               Forgot password?
             </Link>
@@ -315,17 +312,17 @@ function LoginModal({ open, onClose }) {
 
           <button
             type="submit"
-            className="group mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[13px] bg-[var(--primary)] text-[10px] font-extrabold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--primary-hover)]"
+            className="group mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[13px] bg-[var(--primary)] text-[10px] font-extrabold uppercase tracking-[0.14em] text-white transition hover:bg-[var(--primary-hover)]"
           >
             Sign In
 
             <IconArrowRight
               size={14}
-              className="transition group-hover:translate-x-1"
+              className="transition-transform group-hover:translate-x-1"
             />
           </button>
 
-          <p className="mt-5 text-center text-[10px] text-[#99958d]">
+          <p className="mt-5 text-center text-[10px] tracking-[0.01em] text-[#99958d]">
             Don't have an account?{" "}
             <Link
               href="/register"
@@ -344,21 +341,21 @@ function LoginModal({ open, onClose }) {
 function MobileSubMenu({ title, data, onBack, onClose }) {
   return (
     <div className="absolute inset-0 flex flex-col bg-white">
-      <div className="flex h-[76px] shrink-0 items-center gap-3 border-b border-[#eeeae4] px-5">
+      <div className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[#eeeae4] px-4 sm:px-5">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f3f1ed]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f3f1ed]"
         >
           <IconChevronLeft size={19} />
         </button>
 
-        <div>
-          <span className="text-[8px] font-extrabold uppercase tracking-[0.18em] text-[var(--primary)]">
+        <div className="min-w-0">
+          <span className="text-[8px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]">
             Explore
           </span>
 
-          <h3 className="text-[18px] font-black text-[#292722]">
+          <h3 className="truncate text-[17px] font-black tracking-[-0.02em] text-[#292722]">
             {title}
           </h3>
         </div>
@@ -366,13 +363,13 @@ function MobileSubMenu({ title, data, onBack, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          className="ml-auto flex h-10 w-10 items-center justify-center rounded-xl bg-[#f3f1ed]"
+          className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f3f1ed]"
         >
           <IconX size={18} />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-5">
         <div className="space-y-2">
           {data.items.map((item) => {
             const ItemIcon = item.icon;
@@ -389,18 +386,18 @@ function MobileSubMenu({ title, data, onBack, onClose }) {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="text-[12px] font-extrabold text-[#35322d]">
+                  <p className="text-[12px] font-extrabold tracking-[0.01em] text-[#35322d]">
                     {item.title}
                   </p>
 
-                  <p className="mt-1 text-[9px] leading-4 text-[#99958d]">
+                  <p className="mt-1 text-[9px] leading-4 tracking-[0.01em] text-[#99958d]">
                     {item.description}
                   </p>
                 </div>
 
                 <IconChevronRight
                   size={16}
-                  className="text-[#aaa59d]"
+                  className="shrink-0 text-[#aaa59d]"
                 />
               </Link>
             );
@@ -423,9 +420,7 @@ function MobileMenu({ open, onClose, onLogin }) {
   return (
     <div
       className={`fixed inset-0 z-[4500] lg:hidden ${
-        open
-          ? "pointer-events-auto"
-          : "pointer-events-none"
+        open ? "pointer-events-auto" : "pointer-events-none"
       }`}
     >
       <button
@@ -439,28 +434,22 @@ function MobileMenu({ open, onClose, onLogin }) {
 
       <aside
         className={`absolute left-0 top-0 h-full w-[min(390px,88vw)] overflow-hidden bg-white shadow-[20px_0_70px_rgba(0,0,0,0.2)] transition-transform duration-300 ${
-          open
-            ? "translate-x-0"
-            : "-translate-x-full"
+          open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div
           className={`absolute inset-0 flex flex-col bg-white transition-transform duration-300 ${
-            submenu
-              ? "-translate-x-full"
-              : "translate-x-0"
+            submenu ? "-translate-x-full" : "translate-x-0"
           }`}
         >
-          <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-[#eeeae4] px-5">
+          <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-[#eeeae4] px-4 sm:px-5">
             <Link
               href="/"
               onClick={onClose}
               className="text-[25px] font-black tracking-[-0.06em]"
             >
               Veyra
-              <span className="text-[var(--primary)]">
-                .
-              </span>
+              <span className="text-[var(--primary)]">.</span>
             </Link>
 
             <button
@@ -472,95 +461,61 @@ function MobileMenu({ open, onClose, onLogin }) {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 py-6">
+          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-5">
             <div className="rounded-[21px] bg-[#171816] p-5 text-white">
-              <span className="text-[8px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]">
+              <span className="text-[8px] font-extrabold uppercase tracking-[0.22em] text-[var(--primary)]">
                 Currency platform
               </span>
 
-              <h3 className="mt-2 text-[22px] font-black leading-tight tracking-[-0.04em]">
+              <h3 className="mt-2 text-[22px] font-black leading-tight tracking-[-0.035em]">
                 Smarter currency.
                 <br />
                 Simpler transfers.
               </h3>
 
-              <p className="mt-2 text-[9px] leading-4 text-white/40">
+              <p className="mt-2 text-[9px] leading-4 tracking-[0.01em] text-white/40">
                 Everything you need to manage global currencies.
               </p>
             </div>
 
             <div className="mt-5 space-y-1">
-              <Link
-                href="/"
-                onClick={onClose}
-                className="flex h-13 items-center justify-between rounded-xl px-3 text-[13px] font-bold hover:bg-[#f5f3ef]"
-              >
-                Home
-                <IconChevronRight size={16} />
-              </Link>
+              {[
+                ["Home", "/"],
+                ["Exchange Rates", "/exchange-rates"],
+                ["Business", "/business"],
+                ["About", "/about"],
+                ["Contact", "/contact"],
+              ].map(([label, href]) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onClose}
+                  className="flex min-h-[52px] items-center justify-between rounded-xl px-3 text-[13px] font-bold tracking-[0.01em] transition hover:bg-[#f5f3ef]"
+                >
+                  {label}
+                  <IconChevronRight size={16} />
+                </Link>
+              ))}
 
-              <Link
-                href="/exchange-rates"
-                onClick={onClose}
-                className="flex h-13 items-center justify-between rounded-xl px-3 text-[13px] font-bold hover:bg-[#f5f3ef]"
-              >
-                Exchange Rates
-                <IconChevronRight size={16} />
-              </Link>
-
-              {Object.entries(dropdownData).map(
-                ([title, data]) => (
-                  <button
-                    type="button"
-                    key={title}
-                    onClick={() =>
-                      setSubmenu(title)
-                    }
-                    className="flex h-14 w-full items-center justify-between rounded-xl px-3 text-left hover:bg-[#f5f3ef]"
-                  >
-                    <span className="text-[13px] font-bold">
-                      {title}
-                    </span>
-
-                    <IconChevronRight size={16} />
-                  </button>
-                )
-              )}
-
-              <Link
-                href="/business"
-                onClick={onClose}
-                className="flex h-13 items-center justify-between rounded-xl px-3 text-[13px] font-bold hover:bg-[#f5f3ef]"
-              >
-                Business
-                <IconChevronRight size={16} />
-              </Link>
-
-              <Link
-                href="/about"
-                onClick={onClose}
-                className="flex h-13 items-center justify-between rounded-xl px-3 text-[13px] font-bold hover:bg-[#f5f3ef]"
-              >
-                About
-                <IconChevronRight size={16} />
-              </Link>
-
-              <Link
-                href="/contact"
-                onClick={onClose}
-                className="flex h-13 items-center justify-between rounded-xl px-3 text-[13px] font-bold hover:bg-[#f5f3ef]"
-              >
-                Contact
-                <IconChevronRight size={16} />
-              </Link>
+              {Object.entries(dropdownData).map(([title, data]) => (
+                <button
+                  type="button"
+                  key={title}
+                  onClick={() => setSubmenu(title)}
+                  className="flex min-h-[52px] w-full items-center justify-between rounded-xl px-3 text-left text-[13px] font-bold tracking-[0.01em] transition hover:bg-[#f5f3ef]"
+                >
+                  {title}
+                  <IconChevronRight size={16} />
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="border-t border-[#eeeae4] p-5">
+          <div className="shrink-0 border-t border-[#eeeae4] bg-white p-4 sm:p-5">
             <button
               type="button"
               onClick={onLogin}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#e2ded7] text-[10px] font-extrabold uppercase tracking-[0.1em]"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#e2ded7] text-[10px] font-extrabold uppercase tracking-[0.14em]"
             >
               <IconUser size={16} />
               Sign In
@@ -569,7 +524,7 @@ function MobileMenu({ open, onClose, onLogin }) {
             <Link
               href="/currency-converter"
               onClick={onClose}
-              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-[10px] font-extrabold uppercase tracking-[0.1em] text-white"
+              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-[10px] font-extrabold uppercase tracking-[0.14em] text-white"
             >
               Convert Now
               <IconArrowRight size={14} />
@@ -579,18 +534,14 @@ function MobileMenu({ open, onClose, onLogin }) {
 
         <div
           className={`absolute inset-0 bg-white transition-transform duration-300 ${
-            submenu
-              ? "translate-x-0"
-              : "translate-x-full"
+            submenu ? "translate-x-0" : "translate-x-full"
           }`}
         >
           {submenu && (
             <MobileSubMenu
               title={submenu}
               data={dropdownData[submenu]}
-              onBack={() =>
-                setSubmenu(null)
-              }
+              onBack={() => setSubmenu(null)}
               onClose={onClose}
             />
           )}
@@ -612,17 +563,28 @@ function CurrencyDropdown() {
     ["AED", "UAE Dirham", IconCurrencyDollar],
   ];
 
+  useEffect(() => {
+    const handleOutside = (event) => {
+      if (!event.target.closest("[data-currency-dropdown]")) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+    };
+  }, []);
+
   return (
-    <div className="relative hidden sm:block">
+    <div data-currency-dropdown className="relative hidden sm:block">
       <button
         type="button"
-        onClick={() =>
-          setOpen((value) => !value)
-        }
-        className="flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-[11px] font-extrabold text-[#555149] transition hover:bg-[#f4f1ec] hover:text-[var(--primary)]"
+        onClick={() => setOpen((value) => !value)}
+        className="flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-[11px] font-extrabold tracking-[0.02em] text-[#555149] transition hover:bg-[#f4f1ec] hover:text-[var(--primary)]"
       >
         <IconGlobe size={16} />
-
         {currency}
 
         <IconChevronDown
@@ -635,37 +597,35 @@ function CurrencyDropdown() {
 
       {open && (
         <div className="absolute right-0 top-[calc(100%+10px)] z-[4000] w-[205px] rounded-[17px] border border-[#e5e1d9] bg-white p-2 shadow-[0_20px_55px_rgba(30,27,22,0.14)]">
-          {currencies.map(
-            ([code, name, CurrencyIcon]) => (
-              <button
-                type="button"
-                key={code}
-                onClick={() => {
-                  setCurrency(code);
-                  setOpen(false);
-                }}
-                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-[#f5f3ef]"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f3f1ed]">
-                  <CurrencyIcon size={16} />
+          {currencies.map(([code, name, CurrencyIcon]) => (
+            <button
+              type="button"
+              key={code}
+              onClick={() => {
+                setCurrency(code);
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left hover:bg-[#f5f3ef]"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f3f1ed]">
+                <CurrencyIcon size={16} />
+              </span>
+
+              <span className="flex-1">
+                <span className="block text-[10px] font-extrabold tracking-[0.03em]">
+                  {code}
                 </span>
 
-                <span className="flex-1">
-                  <span className="block text-[10px] font-extrabold">
-                    {code}
-                  </span>
-
-                  <span className="block text-[8px] text-[#99958d]">
-                    {name}
-                  </span>
+                <span className="block text-[8px] tracking-[0.01em] text-[#99958d]">
+                  {name}
                 </span>
+              </span>
 
-                {currency === code && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
-                )}
-              </button>
-            )
-          )}
+              {currency === code && (
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
+              )}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -691,33 +651,58 @@ function CartButton() {
         cartRef.current &&
         !cartRef.current.contains(event.target)
       ) {
+        if (window.innerWidth >= 1024) {
+          setOpen(false);
+        }
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
         setOpen(false);
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleOutsideClick
-    );
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
       document.removeEventListener(
         "mousedown",
         handleOutsideClick
       );
+      document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
+  useEffect(() => {
+    if (!open) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    if (window.innerWidth < 1024) {
+      document.body.style.overflow = "hidden";
+    }
+
+    const handleResize = () => {
+      document.body.style.overflow =
+        window.innerWidth < 1024 && open ? "hidden" : "";
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   const getProductPrice = (item) => {
     const price = Number(item?.price || 0);
-    const discountPrice = Number(
-      item?.discount_price || 0
-    );
+    const discountPrice = Number(item?.discount_price || 0);
 
-    if (
-      discountPrice > 0 &&
-      discountPrice < price
-    ) {
+    if (discountPrice > 0 && discountPrice < price) {
       return discountPrice;
     }
 
@@ -725,9 +710,7 @@ function CartButton() {
   };
 
   const getImageUrl = (image) => {
-    if (!image) {
-      return null;
-    }
+    if (!image) return null;
 
     if (
       image.startsWith("http://") ||
@@ -736,345 +719,368 @@ function CartButton() {
       return image;
     }
 
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || "";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
 
     const baseUrl = apiUrl
       .replace(/\/api\/?$/, "")
       .replace(/\/+$/, "");
 
-    return `${baseUrl}/${image.replace(
-      /^\/+/,
-      ""
-    )}`;
+    return `${baseUrl}/${image.replace(/^\/+/, "")}`;
+  };
+
+  const formatPrice = (value) => {
+    return Number(value || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const closeCart = () => {
+    setOpen(false);
   };
 
   return (
-    <div
-      ref={cartRef}
-      className="relative"
-    >
+    <div ref={cartRef} className="relative">
       <button
         type="button"
-        onClick={() =>
-          setOpen((value) => !value)
-        }
+        onClick={() => setOpen((value) => !value)}
         aria-label={`Cart with ${cartCount} items`}
         aria-expanded={open}
-        className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition ${
+        className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 ${
           open
-            ? "bg-[#f4f1ec] text-[var(--primary)]"
+            ? "bg-[#171816] text-[var(--primary)]"
             : "text-[#555149] hover:bg-[#f4f1ec] hover:text-[var(--primary)]"
         }`}
       >
-        <IconShoppingCart size={20} />
+        <IconShoppingCart size={20} stroke={1.9} />
 
         {cartCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--primary)] px-1 text-[8px] font-black text-white shadow-sm">
-            {cartCount > 99
-              ? "99+"
-              : cartCount}
+          <span className="absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-[var(--primary)] px-1 text-[8px] font-black leading-none text-white shadow-sm ring-2 ring-white">
+            {cartCount > 99 ? "99+" : cartCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+12px)] z-[99999] w-[calc(100vw-24px)] max-w-[420px] overflow-hidden rounded-[22px] border border-[#e5e0d8] bg-white shadow-[0_25px_80px_rgba(25,23,19,0.18)]">
-          <div className="border-b border-[#eeeae3] bg-[#fbfaf7] px-5 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[8px] font-extrabold uppercase tracking-[0.16em] text-[#aaa49a]">
-                  Shopping Cart
-                </p>
+        <>
+          <button
+            type="button"
+            onClick={closeCart}
+            aria-label="Close cart"
+            className="fixed inset-0 z-[9990] hidden bg-black/20 backdrop-blur-[1px] lg:block"
+          />
 
-                <h3 className="mt-1 text-[15px] font-black tracking-[-0.025em] text-[#292721]">
-                  Your Cart
-                </h3>
+          <div
+            className="
+              fixed
+              left-0
+              right-0
+              top-0
+              z-[10000]
+              flex
+              max-h-[92dvh]
+              flex-col
+              overflow-hidden
+              rounded-b-[26px]
+              border-b
+              border-[#e4dfd7]
+              bg-white
+              shadow-[0_25px_70px_rgba(25,23,19,0.20)]
 
-                {cartCount > 0 && (
-                  <p className="mt-1 text-[9px] text-[#858078]">
-                    {cartCount}{" "}
-                    {cartCount === 1
-                      ? "item"
-                      : "items"}{" "}
-                    in your cart
+              lg:absolute
+              lg:left-auto
+              lg:right-0
+              lg:top-[calc(100%+14px)]
+              lg:w-[430px]
+              lg:max-h-[min(690px,calc(100vh-110px))]
+              lg:rounded-[26px]
+              lg:border
+              lg:shadow-[0_30px_90px_rgba(25,23,19,0.20)]
+            "
+          >
+            <div className="flex shrink-0 items-center justify-between border-b border-[#eee9e1] bg-white px-4 py-4 sm:px-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#171816] text-[var(--primary)]">
+                  <IconShoppingBag size={20} stroke={1.8} />
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-[15px] font-black tracking-[-0.02em] text-[#292721]">
+                      Your Cart
+                    </h3>
+
+                    {cartCount > 0 && (
+                      <span className="rounded-full bg-[#f3f0ea] px-2 py-0.5 text-[8px] font-black tracking-[0.03em] text-[#6f695f]">
+                        {cartCount}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-0.5 text-[9px] tracking-[0.01em] text-[#9a948b]">
+                    {cartCount > 0
+                      ? `${cartCount} ${
+                          cartCount === 1 ? "item" : "items"
+                        } ready for checkout`
+                      : "Your shopping bag is waiting"}
                   </p>
-                )}
+                </div>
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setOpen(false)
-                }
-                className="flex h-8 w-8 items-center justify-center rounded-full text-[#858078] transition hover:bg-[#eeeae3] hover:text-[#292721]"
+                onClick={closeCart}
+                aria-label="Close cart"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f5f2ed] text-[#777168] transition hover:bg-[#eeeae4] hover:text-[#292721]"
               >
-                <IconX size={15} />
+                <IconX size={16} />
               </button>
             </div>
-          </div>
 
-          {cartItems.length === 0 ? (
-            <div className="px-6 py-10 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f5f2ec] text-[#aaa49a]">
-                <IconShoppingBag size={26} />
-              </div>
-
-              <h4 className="mt-4 text-[14px] font-black text-[#292721]">
-                Your cart is empty
-              </h4>
-
-              <p className="mt-1 text-[9px] leading-4 text-[#858078]">
-                Add some products to your
-                cart to continue.
-              </p>
-
-              <Link
-                href="/products"
-                onClick={() =>
-                  setOpen(false)
-                }
-                className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--primary)] px-5 text-[8px] font-extrabold uppercase tracking-[0.1em] text-white transition hover:bg-[var(--primary-hover)]"
-              >
-                Shop Products
-                <IconArrowRight size={13} />
-              </Link>
-            </div>
-          ) : (
-            <>
-              <div className="max-h-[350px] overflow-y-auto p-4">
-                <div className="space-y-3">
-                  {cartItems.map((item) => {
-                    const imageUrl =
-                      getImageUrl(
-                        item.image
-                      );
-
-                    const price =
-                      getProductPrice(
-                        item
-                      );
-
-                    const quantity =
-                      Number(
-                        item.quantity || 1
-                      );
-
-                    const subtotal =
-                      price * quantity;
-
-                    return (
-                      <div
-                        key={item.id}
-                        className="rounded-2xl border border-[#eeeae3] bg-white p-3 transition hover:border-[#ded8ce]"
-                      >
-                        <div className="flex gap-3">
-                          <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl bg-[#f3f0ea]">
-                            {imageUrl ? (
-                              <img
-                                src={imageUrl}
-                                alt={
-                                  item.name ||
-                                  "Product"
-                                }
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-[#aaa49a]">
-                                <IconShoppingBag
-                                  size={24}
-                                />
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <Link
-                                  href={`/products/${item.slug}`}
-                                  onClick={() =>
-                                    setOpen(
-                                      false
-                                    )
-                                  }
-                                  className="line-clamp-2 text-[10px] font-black leading-4 text-[#292721] transition hover:text-[var(--primary)]"
-                                >
-                                  {item.name}
-                                </Link>
-
-                                {item.sku && (
-                                  <p className="mt-1 truncate text-[7px] font-bold uppercase tracking-[0.08em] text-[#aaa49a]">
-                                    SKU:{" "}
-                                    {
-                                      item.sku
-                                    }
-                                  </p>
-                                )}
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeFromCart(
-                                    item.id
-                                  )
-                                }
-                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[#aaa49a] transition hover:bg-red-50 hover:text-red-500"
-                                aria-label="Remove product"
-                              >
-                                <IconX size={13} />
-                              </button>
-                            </div>
-
-                            <div className="mt-2 flex items-center justify-between gap-2">
-                              <div className="flex items-center rounded-lg border border-[#e4dfd7] bg-[#faf9f6]">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    decreaseQuantity(
-                                      item.id
-                                    )
-                                  }
-                                  className="flex h-7 w-7 items-center justify-center text-[#716c63] transition hover:text-[var(--primary)]"
-                                >
-                                  <IconMinus
-                                    size={11}
-                                  />
-                                </button>
-
-                                <span className="flex h-7 min-w-[24px] items-center justify-center text-[9px] font-black text-[#292721]">
-                                  {
-                                    quantity
-                                  }
-                                </span>
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    increaseQuantity(
-                                      item.id
-                                    )
-                                  }
-                                  className="flex h-7 w-7 items-center justify-center text-[#716c63] transition hover:text-[var(--primary)]"
-                                >
-                                  <IconPlus
-                                    size={11}
-                                  />
-                                </button>
-                              </div>
-
-                              <div className="text-right">
-                                <p className="text-[11px] font-black text-[#292721]">
-                                  ₹
-                                  {subtotal.toLocaleString(
-                                    "en-IN",
-                                    {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    }
-                                  )}
-                                </p>
-
-                                {quantity > 1 && (
-                                  <p className="text-[7px] text-[#aaa49a]">
-                                    ₹
-                                    {price.toLocaleString(
-                                      "en-IN",
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      }
-                                    )}{" "}
-                                    each
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="border-t border-[#eeeae3] bg-[#fbfaf7] p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-[#858078]">
-                    Subtotal
-                  </span>
-
-                  <span className="text-[17px] font-black tracking-[-0.03em] text-[#292721]">
-                    ₹
-                    {Number(
-                      cartTotal
-                    ).toLocaleString(
-                      "en-IN",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
-                    )}
-                  </span>
+            {cartItems.length === 0 ? (
+              <div className="flex min-h-[320px] flex-1 flex-col items-center justify-center px-6 py-10 text-center">
+                <div className="flex h-[76px] w-[76px] items-center justify-center rounded-[24px] bg-[#f6f3ed] text-[#aaa49b]">
+                  <IconShoppingBag size={32} stroke={1.5} />
                 </div>
 
-                <p className="mt-1 text-[8px] text-[#aaa49a]">
-                  Shipping and taxes calculated at checkout.
+                <h4 className="mt-5 text-[16px] font-black tracking-[-0.025em] text-[#292721]">
+                  Your cart is empty
+                </h4>
+
+                <p className="mt-2 max-w-[260px] text-[9px] leading-5 tracking-[0.01em] text-[#938d84]">
+                  Looks like you haven't added anything yet. Explore our
+                  products and find something you love.
                 </p>
 
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <Link
-                    href="/cart"
-                    onClick={() =>
-                      setOpen(false)
-                    }
-                    className="flex h-11 items-center justify-center rounded-xl border border-[#ded9d1] bg-white text-[8px] font-extrabold uppercase tracking-[0.08em] text-[#625e56] transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
-                  >
-                    View Cart
-                  </Link>
+                <Link
+                  href="/products"
+                  onClick={closeCart}
+                  className="group mt-6 flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--primary)] px-6 text-[9px] font-extrabold uppercase tracking-[0.14em] text-white shadow-[0_8px_22px_rgba(0,0,0,0.12)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-hover)]"
+                >
+                  Shop Products
 
-                  <Link
-                    href="/checkout"
-                    onClick={() =>
-                      setOpen(false)
-                    }
-                    className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--primary)] text-[8px] font-extrabold uppercase tracking-[0.08em] text-white transition hover:bg-[var(--primary-hover)]"
-                  >
-                    Checkout
-                    <IconArrowRight size={13} />
-                  </Link>
-                </div>
+                  <IconArrowRight
+                    size={14}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </Link>
               </div>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#faf9f6] px-3 py-3 sm:px-4 sm:py-4 lg:max-h-[390px]">
+                  <div className="space-y-2.5">
+                    {cartItems.map((item) => {
+                      const imageUrl = getImageUrl(item.image);
+                      const price = getProductPrice(item);
+                      const originalPrice = Number(item?.price || 0);
+                      const quantity = Math.max(
+                        1,
+                        Number(item.quantity || 1)
+                      );
+                      const subtotal = price * quantity;
+                      const hasDiscount = originalPrice > price;
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="group overflow-hidden rounded-[19px] border border-[#ebe6de] bg-white p-3 transition-all duration-200 hover:border-[#dcd5cb] hover:shadow-[0_8px_25px_rgba(35,31,25,0.06)]"
+                        >
+                          <div className="flex gap-3">
+                            <Link
+                              href={`/products/${item.slug}`}
+                              onClick={closeCart}
+                              className="relative h-[78px] w-[78px] shrink-0 overflow-hidden rounded-[15px] bg-[#f3f0ea] sm:h-[84px] sm:w-[84px]"
+                            >
+                              {imageUrl ? (
+                                <img
+                                  src={imageUrl}
+                                  alt={item.name || "Product"}
+                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center text-[#aaa49a]">
+                                  <IconShoppingBag
+                                    size={26}
+                                    stroke={1.5}
+                                  />
+                                </div>
+                              )}
+
+                              {hasDiscount && (
+                                <span className="absolute left-1.5 top-1.5 rounded-md bg-[var(--primary)] px-1.5 py-1 text-[6px] font-black uppercase tracking-[0.06em] text-white">
+                                  Sale
+                                </span>
+                              )}
+                            </Link>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <Link
+                                    href={`/products/${item.slug}`}
+                                    onClick={closeCart}
+                                    className="line-clamp-2 text-[10px] font-black leading-[1.45] tracking-[0.005em] text-[#292721] transition hover:text-[var(--primary)] sm:text-[11px]"
+                                  >
+                                    {item.name}
+                                  </Link>
+
+                                  {item.sku && (
+                                    <p className="mt-1 truncate text-[7px] font-bold uppercase tracking-[0.1em] text-[#aaa49a]">
+                                      SKU: {item.sku}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removeFromCart(item.id)
+                                  }
+                                  aria-label={`Remove ${
+                                    item.name || "product"
+                                  }`}
+                                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#aaa49a] transition hover:bg-red-50 hover:text-red-500"
+                                >
+                                  <IconX size={13} stroke={1.8} />
+                                </button>
+                              </div>
+
+                              <div className="mt-3 flex items-end justify-between gap-2">
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[12px] font-black tracking-[-0.015em] text-[#292721] sm:text-[13px]">
+                                      ₹{formatPrice(price)}
+                                    </span>
+
+                                    {hasDiscount && (
+                                      <span className="text-[8px] font-medium tracking-[0.01em] text-[#aaa39a] line-through">
+                                        ₹{formatPrice(originalPrice)}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {quantity > 1 && (
+                                    <p className="mt-0.5 text-[7px] tracking-[0.01em] text-[#aaa49a]">
+                                      ₹{formatPrice(price)} each
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="flex h-8 items-center overflow-hidden rounded-[9px] border border-[#e1dcd4] bg-[#faf9f6]">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      decreaseQuantity(item.id)
+                                    }
+                                    disabled={quantity <= 1}
+                                    aria-label="Decrease quantity"
+                                    className="flex h-8 w-8 items-center justify-center text-[#625d55] transition hover:bg-[#eeeae4] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-35"
+                                  >
+                                    <IconMinus size={11} stroke={2} />
+                                  </button>
+
+                                  <span className="flex h-8 min-w-[27px] items-center justify-center border-x border-[#e1dcd4] bg-white px-1 text-[9px] font-black text-[#292721]">
+                                    {quantity}
+                                  </span>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      increaseQuantity(item.id)
+                                    }
+                                    aria-label="Increase quantity"
+                                    className="flex h-8 w-8 items-center justify-center text-[#625d55] transition hover:bg-[#eeeae4] hover:text-[var(--primary)]"
+                                  >
+                                    <IconPlus size={11} stroke={2} />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-between border-t border-[#f0ece5] pt-2.5">
+                            <span className="text-[7px] font-bold uppercase tracking-[0.14em] text-[#aaa39a]">
+                              Item total
+                            </span>
+
+                            <span className="text-[10px] font-black tracking-[0.01em] text-[#292721]">
+                              ₹{formatPrice(subtotal)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="shrink-0 border-t border-[#e8e3db] bg-white px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 sm:px-5">
+                  <div className="flex items-end justify-between gap-4 rounded-[17px] bg-[#faf8f4] p-3.5">
+                    <div>
+                      <p className="text-[8px] font-extrabold uppercase tracking-[0.14em] text-[#938d84]">
+                        Order summary
+                      </p>
+
+                      <div className="mt-1.5 flex items-center gap-1.5 text-[8px] tracking-[0.01em] text-[#aaa39a]">
+                        <IconShieldCheck
+                          size={12}
+                          className="text-[var(--primary)]"
+                        />
+                        <span>Secure checkout</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-[#8d877e]">
+                        Subtotal
+                      </p>
+
+                      <p className="mt-0.5 text-[18px] font-black tracking-[-0.035em] text-[#292721]">
+                        ₹{formatPrice(cartTotal)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2.5">
+                    <Link
+                      href="/cart"
+                      onClick={closeCart}
+                      className="flex h-11 items-center justify-center rounded-[13px] border border-[#ddd8d0] bg-white text-[8px] font-extrabold uppercase tracking-[0.13em] text-[#625e56] transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
+                    >
+                      View Cart
+                    </Link>
+
+                    <Link
+                      href="/checkout"
+                      onClick={closeCart}
+                      className="group flex h-11 items-center justify-center gap-2 rounded-[13px] bg-[var(--primary)] text-[8px] font-extrabold uppercase tracking-[0.13em] text-white shadow-[0_10px_25px_rgba(0,0,0,0.10)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-hover)]"
+                    >
+                      Checkout
+
+                      <IconArrowRight
+                        size={14}
+                        className="transition-transform group-hover:translate-x-1"
+                      />
+                    </Link>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
 export default function Header() {
-  const [activeMenu, setActiveMenu] =
-    useState(null);
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [search, setSearch] = useState("");
 
-  const [loginOpen, setLoginOpen] =
-    useState(false);
-
-  const [mobileMenu, setMobileMenu] =
-    useState(false);
-
-  const [search, setSearch] =
-    useState("");
-
-  const desktopSearchRef =
-    useRef(null);
-
-  const mobileSearchRef =
-    useRef(null);
-
-  const closeTimer =
-    useRef(null);
+  const desktopSearchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
+  const closeTimer = useRef(null);
 
   const openMenu = (menu) => {
     if (closeTimer.current) {
@@ -1091,7 +1097,7 @@ export default function Header() {
 
     closeTimer.current = setTimeout(() => {
       setActiveMenu(null);
-    }, 180);
+    }, 120);
   };
 
   const keepMenuOpen = () => {
@@ -1106,18 +1112,20 @@ export default function Header() {
     setMobileMenu(false);
   };
 
+  const closeAll = () => {
+    setActiveMenu(null);
+    setMobileMenu(false);
+    setLoginOpen(false);
+  };
+
   const submitSearch = (event) => {
     event.preventDefault();
 
     const value = search.trim();
 
-    if (!value) {
-      return;
-    }
+    if (!value) return;
 
-    window.location.href = `/search?q=${encodeURIComponent(
-      value
-    )}`;
+    window.location.href = `/search?q=${encodeURIComponent(value)}`;
   };
 
   const focusSearch = () => {
@@ -1129,10 +1137,22 @@ export default function Header() {
   };
 
   useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        closeAll();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  useEffect(() => {
     document.body.style.overflow =
-      loginOpen || mobileMenu
-        ? "hidden"
-        : "";
+      loginOpen || mobileMenu ? "hidden" : "";
 
     return () => {
       document.body.style.overflow = "";
@@ -1142,9 +1162,7 @@ export default function Header() {
   useEffect(() => {
     return () => {
       if (closeTimer.current) {
-        clearTimeout(
-          closeTimer.current
-        );
+        clearTimeout(closeTimer.current);
       }
     };
   }, []);
@@ -1157,7 +1175,7 @@ export default function Header() {
             <div className="flex items-center gap-5">
               <Link
                 href="mailto:globaltechnext@gmail.com"
-                className="flex items-center gap-2 text-[10px] font-medium text-white/55 transition hover:text-[var(--primary)]"
+                className="flex items-center gap-2 text-[10px] font-medium tracking-[0.01em] text-white/55 transition hover:text-[var(--primary)]"
               >
                 <IconMail size={13} />
                 globaltechnext@gmail.com
@@ -1167,14 +1185,14 @@ export default function Header() {
 
               <Link
                 href="tel:+919555787844"
-                className="flex items-center gap-2 text-[10px] font-medium text-white/55 transition hover:text-[var(--primary)]"
+                className="flex items-center gap-2 text-[10px] font-medium tracking-[0.02em] text-white/55 transition hover:text-[var(--primary)]"
               >
                 <IconPhone size={13} />
                 +91 9555787844
               </Link>
             </div>
 
-            <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/30">
+            <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-white/30">
               <IconShieldCheck size={13} />
               Secure currency platform
             </span>
@@ -1182,48 +1200,39 @@ export default function Header() {
         </div>
 
         <nav className="border-b border-[#e8e4dc] bg-white">
-          <div className="mx-auto flex min-h-[78px] max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6 xl:px-8">
+          <div className="mx-auto flex min-h-[72px] max-w-[1400px] items-center gap-2 px-3 py-2.5 sm:min-h-[78px] sm:gap-3 sm:px-6 sm:py-3 xl:px-8">
             <Link
               href="/"
-              className="shrink-0 text-[25px] font-black tracking-[-0.06em] text-[#1d1b18] sm:text-[28px]"
+              className="shrink-0 text-[24px] font-black tracking-[-0.06em] text-[#1d1b18] sm:text-[28px]"
             >
               Veyra
-              <span className="text-[var(--primary)]">
-                .
-              </span>
+              <span className="text-[var(--primary)]">.</span>
             </Link>
 
             <div className="ml-auto hidden h-full items-center lg:flex">
               <Link
                 href="/"
-                className="relative flex h-full items-center px-4 text-[13px] font-bold text-[#514d46] transition hover:text-[var(--primary)]"
+                className="relative flex h-full items-center px-3 text-[13px] font-bold tracking-[0.005em] text-[#514d46] transition hover:text-[var(--primary)] xl:px-4"
               >
                 Home
               </Link>
 
               <Link
                 href="/exchange-rates"
-                className="relative flex h-full items-center px-4 text-[13px] font-bold text-[#514d46] transition hover:text-[var(--primary)]"
+                className="relative flex h-full items-center px-3 text-[13px] font-bold tracking-[0.005em] text-[#514d46] transition hover:text-[var(--primary)] xl:px-4"
               >
                 Exchange Rates
               </Link>
 
-              {Object.entries(
-                dropdownData
-              ).map(([title, data]) => {
-                const active =
-                  activeMenu === title;
+              {Object.entries(dropdownData).map(([title, data]) => {
+                const active = activeMenu === title;
 
                 return (
                   <div
                     key={title}
-                    className="relative h-full"
-                    onMouseEnter={() =>
-                      openMenu(title)
-                    }
-                    onMouseLeave={
-                      delayedClose
-                    }
+                    className="relative flex h-full items-center"
+                    onMouseEnter={() => openMenu(title)}
+                    onMouseLeave={delayedClose}
                   >
                     <button
                       type="button"
@@ -1231,14 +1240,12 @@ export default function Header() {
                         event.stopPropagation();
 
                         if (active) {
-                          setActiveMenu(
-                            null
-                          );
+                          setActiveMenu(null);
                         } else {
                           openMenu(title);
                         }
                       }}
-                      className={`flex h-full items-center gap-1.5 px-4 text-[13px] font-bold transition ${
+                      className={`flex h-full items-center gap-1.5 px-3 text-[13px] font-bold tracking-[0.005em] transition xl:px-4 ${
                         active
                           ? "text-[var(--primary)]"
                           : "text-[#514d46] hover:text-[var(--primary)]"
@@ -1249,21 +1256,16 @@ export default function Header() {
                       <IconChevronDown
                         size={14}
                         className={`transition-transform ${
-                          active
-                            ? "rotate-180"
-                            : ""
+                          active ? "rotate-180" : ""
                         }`}
                       />
                     </button>
 
                     {active && (
                       <div
-                        onMouseEnter={
-                          keepMenuOpen
-                        }
-                        onMouseLeave={
-                          delayedClose
-                        }
+                        className="absolute left-1/2 top-full h-auto -translate-x-1/2 pt-2"
+                        onMouseEnter={keepMenuOpen}
+                        onMouseLeave={delayedClose}
                       >
                         <DesktopDropdown
                           title={title}
@@ -1277,13 +1279,13 @@ export default function Header() {
 
               <Link
                 href="/business"
-                className="px-4 text-[13px] font-bold text-[#514d46] transition hover:text-[var(--primary)]"
+                className="px-3 text-[13px] font-bold tracking-[0.005em] text-[#514d46] transition hover:text-[var(--primary)] xl:px-4"
               >
                 Business
               </Link>
             </div>
 
-            <div className="ml-auto flex min-w-0 items-center gap-1 lg:ml-5">
+            <div className="ml-auto flex min-w-0 items-center gap-0.5 sm:gap-1 lg:ml-5">
               <CurrencyDropdown />
 
               <form
@@ -1299,22 +1301,16 @@ export default function Header() {
                   ref={desktopSearchRef}
                   type="search"
                   value={search}
-                  onChange={(event) =>
-                    setSearch(
-                      event.target.value
-                    )
-                  }
+                  onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search..."
                   aria-label="Search"
-                  className="ml-2 min-w-0 flex-1 bg-transparent text-[11px] font-semibold text-[#292722] outline-none placeholder:text-[#aaa59d]"
+                  className="ml-2 min-w-0 flex-1 bg-transparent text-[11px] font-semibold tracking-[0.01em] text-[#292722] outline-none placeholder:text-[#aaa59d]"
                 />
 
                 {search && (
                   <button
                     type="button"
-                    onClick={() =>
-                      setSearch("")
-                    }
+                    onClick={() => setSearch("")}
                     aria-label="Clear search"
                     className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#aaa59d] transition hover:bg-[#eeeae4] hover:text-[#514d46]"
                   >
@@ -1337,15 +1333,16 @@ export default function Header() {
               <button
                 type="button"
                 onClick={openLogin}
-                className="hidden h-10 items-center gap-1.5 rounded-xl px-3 text-[11px] font-extrabold text-[#514d46] transition hover:bg-[#f4f1ec] hover:text-[var(--primary)] md:flex"
+                className="hidden h-10 items-center gap-1.5 rounded-xl px-3 text-[11px] font-extrabold tracking-[0.02em] text-[#514d46] transition hover:bg-[#f4f1ec] hover:text-[var(--primary)] md:flex"
               >
                 <IconUser size={17} />
-                Sign In
+
+                <span className="hidden xl:inline">Sign In</span>
               </button>
 
               <Link
                 href="/currency-converter"
-                className="hidden h-11 items-center gap-2 rounded-xl bg-[#171816] px-5 text-[9px] font-extrabold uppercase tracking-[0.11em] text-[var(--primary)] shadow-[0_8px_22px_rgba(20,18,15,0.12)] transition hover:-translate-y-0.5 hover:bg-[#292a27] md:flex"
+                className="hidden h-11 items-center gap-2 rounded-xl bg-[#171816] px-4 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[var(--primary)] shadow-[0_8px_22px_rgba(20,18,15,0.12)] transition hover:-translate-y-0.5 hover:bg-[#292a27] xl:flex xl:px-5"
               >
                 Convert Now
                 <IconArrowRight size={14} />
@@ -1365,7 +1362,7 @@ export default function Header() {
             </div>
           </div>
 
-          <div className="border-t border-[#eeeae4] px-4 py-2 xl:hidden">
+          <div className="border-t border-[#eeeae4] px-3 py-2 xl:hidden sm:px-4">
             <form
               onSubmit={submitSearch}
               className="mx-auto flex h-11 max-w-[1400px] items-center rounded-xl border border-[#e2ded7] bg-[#faf9f6] px-3 transition focus-within:border-[var(--primary)] focus-within:bg-white focus-within:ring-4 focus-within:ring-[var(--primary)]/10"
@@ -1379,22 +1376,16 @@ export default function Header() {
                 ref={mobileSearchRef}
                 type="search"
                 value={search}
-                onChange={(event) =>
-                  setSearch(
-                    event.target.value
-                  )
-                }
+                onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search currencies, rates, transfers..."
                 aria-label="Mobile search"
-                className="ml-2 min-w-0 flex-1 bg-transparent text-[11px] font-semibold text-[#292722] outline-none placeholder:text-[#aaa59d]"
+                className="ml-2 min-w-0 flex-1 bg-transparent text-[11px] font-semibold tracking-[0.01em] text-[#292722] outline-none placeholder:text-[#aaa59d]"
               />
 
               {search && (
                 <button
                   type="button"
-                  onClick={() =>
-                    setSearch("")
-                  }
+                  onClick={() => setSearch("")}
                   aria-label="Clear search"
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#aaa59d] hover:bg-[#eeeae4]"
                 >
@@ -1406,7 +1397,7 @@ export default function Header() {
         </nav>
 
         <div className="hidden border-b border-[#eeeae4] bg-[#faf9f6] lg:block">
-          <div className="mx-auto flex h-9 max-w-[1400px] items-center justify-center gap-7 px-6 text-[8px] font-bold uppercase tracking-[0.08em] text-[#918c84]">
+          <div className="mx-auto flex h-9 max-w-[1400px] items-center justify-center gap-7 px-6 text-[8px] font-bold uppercase tracking-[0.11em] text-[#918c84]">
             <span className="flex items-center gap-1.5">
               <IconTrendingUp
                 size={13}
@@ -1440,16 +1431,12 @@ export default function Header() {
 
       <LoginModal
         open={loginOpen}
-        onClose={() =>
-          setLoginOpen(false)
-        }
+        onClose={() => setLoginOpen(false)}
       />
 
       <MobileMenu
         open={mobileMenu}
-        onClose={() =>
-          setMobileMenu(false)
-        }
+        onClose={() => setMobileMenu(false)}
         onLogin={openLogin}
       />
     </>
