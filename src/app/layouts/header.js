@@ -16,15 +16,21 @@ import {
   IconHelpCircle,
   IconMail,
   IconMenu2,
+  IconMinus,
   IconPhone,
+  IconPlus,
   IconSearch,
   IconSend,
   IconShieldCheck,
+  IconShoppingBag,
+  IconShoppingCart,
   IconTrendingUp,
   IconUser,
   IconWorld,
   IconX,
 } from "@tabler/icons-react";
+
+import { useCart } from "../context/CartContext";
 
 const dropdownData = {
   Currencies: {
@@ -134,8 +140,8 @@ function DesktopDropdown({ title, data }) {
             </h3>
 
             <p className="mt-3 text-[10px] leading-5 text-white/40">
-              Simple tools and services designed for your global
-              currency needs.
+              Simple tools and services designed for your global currency
+              needs.
             </p>
 
             <Link
@@ -143,8 +149,8 @@ function DesktopDropdown({ title, data }) {
                 title === "Currencies"
                   ? "/currencies"
                   : title === "Send Money"
-                  ? "/send-money"
-                  : "/resources"
+                    ? "/send-money"
+                    : "/resources"
               }
               className="group mt-7 flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[0.1em] text-[var(--primary)]"
             >
@@ -169,10 +175,7 @@ function DesktopDropdown({ title, data }) {
                 </h4>
               </div>
 
-              <IconChevronRight
-                size={16}
-                className="text-[#c2bdb4]"
-              />
+              <IconChevronRight size={16} className="text-[#c2bdb4]" />
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
@@ -231,147 +234,10 @@ function DesktopDropdown({ title, data }) {
   );
 }
 
-function SearchPanel({ open, onClose }) {
-  const inputRef = useRef(null);
-  const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    if (!open) return;
-
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 100);
-  }, [open]);
-
-  useEffect(() => {
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
-    if (open) {
-      document.addEventListener("keydown", handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  const suggestions = [
-    {
-      title: "Currency Converter",
-      description: "Convert currencies",
-      href: "/currency-converter",
-      icon: IconArrowsExchange,
-    },
-    {
-      title: "Exchange Rates",
-      description: "Live market rates",
-      href: "/exchange-rates",
-      icon: IconTrendingUp,
-    },
-    {
-      title: "Popular Currencies",
-      description: "Browse currencies",
-      href: "/currencies/popular",
-      icon: IconCoin,
-    },
-    {
-      title: "Send Money",
-      description: "International transfers",
-      href: "/send-money",
-      icon: IconSend,
-    },
-  ];
-
-  return (
-    <div className="fixed inset-0 z-[5000]">
-      <button
-        type="button"
-        aria-label="Close search"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-[3px]"
-      />
-
-      <div className="absolute left-1/2 top-[76px] w-[calc(100%-24px)] max-w-[700px] -translate-x-1/2 sm:top-[92px]">
-        <div className="overflow-hidden rounded-[24px] border border-[#e5e1d9] bg-white shadow-[0_30px_90px_rgba(25,23,20,0.22)]">
-          <div className="p-3 sm:p-4">
-            <div className="flex h-[54px] items-center rounded-[15px] border border-[#ded9d1] bg-[#faf9f6] px-4 transition focus-within:border-[var(--primary)] focus-within:ring-4 focus-within:ring-[var(--primary)]/10">
-              <IconSearch
-                size={20}
-                className="text-[var(--primary)]"
-              />
-
-              <input
-                ref={inputRef}
-                value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
-                placeholder="Search currencies, rates, transfers..."
-                className="ml-3 min-w-0 flex-1 bg-transparent text-[13px] font-semibold text-[#292722] outline-none placeholder:text-[#aaa59d]"
-              />
-
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#eeeae4] text-[#777169] transition hover:bg-[#e4dfd7]"
-              >
-                <IconX size={16} />
-              </button>
-            </div>
-          </div>
-
-          <div className="border-t border-[#eeeae4] px-4 pb-5 pt-4 sm:px-5">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[var(--primary)]">
-                Quick search
-              </span>
-
-              <span className="text-[8px] font-semibold text-[#aaa59d]">
-                ESC to close
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {suggestions.map((item) => {
-                const ItemIcon = item.icon;
-
-                return (
-                  <Link
-                    href={item.href}
-                    key={item.title}
-                    onClick={onClose}
-                    className="group rounded-[15px] border border-[#ebe7e0] p-3 transition hover:-translate-y-0.5 hover:border-[var(--primary)]/30 hover:shadow-[0_8px_20px_rgba(30,27,22,0.07)]"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f4f2ed] text-[#615d56] transition group-hover:bg-[var(--primary)] group-hover:text-white">
-                      <ItemIcon size={17} />
-                    </div>
-
-                    <p className="mt-2.5 text-[10px] font-extrabold text-[#34312c]">
-                      {item.title}
-                    </p>
-
-                    <p className="mt-0.5 text-[8px] text-[#9c978f]">
-                      {item.description}
-                    </p>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function LoginModal({ open, onClose }) {
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-[5000] flex items-center justify-center px-4">
@@ -387,7 +253,7 @@ function LoginModal({ open, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/15 hover:text-white"
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/60 transition hover:bg-white/15 hover:text-white"
           >
             <IconX size={17} />
           </button>
@@ -428,10 +294,7 @@ function LoginModal({ open, onClose }) {
           </label>
 
           <div className="flex h-12 items-center rounded-[13px] border border-[#e2ded7] bg-[#faf9f6] px-3.5 focus-within:border-[var(--primary)]">
-            <IconShieldCheck
-              size={17}
-              className="text-[#9b968e]"
-            />
+            <IconShieldCheck size={17} className="text-[#9b968e]" />
 
             <input
               type="password"
@@ -478,12 +341,7 @@ function LoginModal({ open, onClose }) {
   );
 }
 
-function MobileSubMenu({
-  title,
-  data,
-  onBack,
-  onClose,
-}) {
+function MobileSubMenu({ title, data, onBack, onClose }) {
   return (
     <div className="absolute inset-0 flex flex-col bg-white">
       <div className="flex h-[76px] shrink-0 items-center gap-3 border-b border-[#eeeae4] px-5">
@@ -524,7 +382,7 @@ function MobileSubMenu({
                 href={item.href}
                 key={item.title}
                 onClick={onClose}
-                className="flex items-center gap-3 rounded-[17px] border border-[#e9e5de] p-3.5"
+                className="flex items-center gap-3 rounded-[17px] border border-[#e9e5de] p-3.5 transition hover:border-[var(--primary)]/30 hover:bg-[#fffdf9]"
               >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f4f2ed]">
                   <ItemIcon size={19} />
@@ -553,11 +411,7 @@ function MobileSubMenu({
   );
 }
 
-function MobileMenu({
-  open,
-  onClose,
-  onLogin,
-}) {
+function MobileMenu({ open, onClose, onLogin }) {
   const [submenu, setSubmenu] = useState(null);
 
   useEffect(() => {
@@ -585,7 +439,9 @@ function MobileMenu({
 
       <aside
         className={`absolute left-0 top-0 h-full w-[min(390px,88vw)] overflow-hidden bg-white shadow-[20px_0_70px_rgba(0,0,0,0.2)] transition-transform duration-300 ${
-          open ? "translate-x-0" : "-translate-x-full"
+          open
+            ? "translate-x-0"
+            : "-translate-x-full"
         }`}
       >
         <div
@@ -601,7 +457,10 @@ function MobileMenu({
               onClick={onClose}
               className="text-[25px] font-black tracking-[-0.06em]"
             >
-              Veyra<span className="text-[var(--primary)]">.</span>
+              Veyra
+              <span className="text-[var(--primary)]">
+                .
+              </span>
             </Link>
 
             <button
@@ -654,7 +513,9 @@ function MobileMenu({
                   <button
                     type="button"
                     key={title}
-                    onClick={() => setSubmenu(title)}
+                    onClick={() =>
+                      setSubmenu(title)
+                    }
                     className="flex h-14 w-full items-center justify-between rounded-xl px-3 text-left hover:bg-[#f5f3ef]"
                   >
                     <span className="text-[13px] font-bold">
@@ -727,7 +588,9 @@ function MobileMenu({
             <MobileSubMenu
               title={submenu}
               data={dropdownData[submenu]}
-              onBack={() => setSubmenu(null)}
+              onBack={() =>
+                setSubmenu(null)
+              }
               onClose={onClose}
             />
           )}
@@ -753,11 +616,15 @@ function CurrencyDropdown() {
     <div className="relative hidden sm:block">
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() =>
+          setOpen((value) => !value)
+        }
         className="flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-[11px] font-extrabold text-[#555149] transition hover:bg-[#f4f1ec] hover:text-[var(--primary)]"
       >
         <IconGlobe size={16} />
+
         {currency}
+
         <IconChevronDown
           size={13}
           className={`transition-transform ${
@@ -805,13 +672,409 @@ function CurrencyDropdown() {
   );
 }
 
-export default function Header() {
-  const [activeMenu, setActiveMenu] = useState(null);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [mobileMenu, setMobileMenu] = useState(false);
+function CartButton() {
+  const {
+    cartItems = [],
+    cartCount = 0,
+    cartTotal = 0,
+    increaseQuantity,
+    decreaseQuantity,
+    removeFromCart,
+  } = useCart();
 
-  const closeTimer = useRef(null);
+  const [open, setOpen] = useState(false);
+  const cartRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        cartRef.current &&
+        !cartRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+    };
+  }, []);
+
+  const getProductPrice = (item) => {
+    const price = Number(item?.price || 0);
+    const discountPrice = Number(
+      item?.discount_price || 0
+    );
+
+    if (
+      discountPrice > 0 &&
+      discountPrice < price
+    ) {
+      return discountPrice;
+    }
+
+    return price;
+  };
+
+  const getImageUrl = (image) => {
+    if (!image) {
+      return null;
+    }
+
+    if (
+      image.startsWith("http://") ||
+      image.startsWith("https://")
+    ) {
+      return image;
+    }
+
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || "";
+
+    const baseUrl = apiUrl
+      .replace(/\/api\/?$/, "")
+      .replace(/\/+$/, "");
+
+    return `${baseUrl}/${image.replace(
+      /^\/+/,
+      ""
+    )}`;
+  };
+
+  return (
+    <div
+      ref={cartRef}
+      className="relative"
+    >
+      <button
+        type="button"
+        onClick={() =>
+          setOpen((value) => !value)
+        }
+        aria-label={`Cart with ${cartCount} items`}
+        aria-expanded={open}
+        className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition ${
+          open
+            ? "bg-[#f4f1ec] text-[var(--primary)]"
+            : "text-[#555149] hover:bg-[#f4f1ec] hover:text-[var(--primary)]"
+        }`}
+      >
+        <IconShoppingCart size={20} />
+
+        {cartCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--primary)] px-1 text-[8px] font-black text-white shadow-sm">
+            {cartCount > 99
+              ? "99+"
+              : cartCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-[calc(100%+12px)] z-[99999] w-[calc(100vw-24px)] max-w-[420px] overflow-hidden rounded-[22px] border border-[#e5e0d8] bg-white shadow-[0_25px_80px_rgba(25,23,19,0.18)]">
+          <div className="border-b border-[#eeeae3] bg-[#fbfaf7] px-5 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[8px] font-extrabold uppercase tracking-[0.16em] text-[#aaa49a]">
+                  Shopping Cart
+                </p>
+
+                <h3 className="mt-1 text-[15px] font-black tracking-[-0.025em] text-[#292721]">
+                  Your Cart
+                </h3>
+
+                {cartCount > 0 && (
+                  <p className="mt-1 text-[9px] text-[#858078]">
+                    {cartCount}{" "}
+                    {cartCount === 1
+                      ? "item"
+                      : "items"}{" "}
+                    in your cart
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setOpen(false)
+                }
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[#858078] transition hover:bg-[#eeeae3] hover:text-[#292721]"
+              >
+                <IconX size={15} />
+              </button>
+            </div>
+          </div>
+
+          {cartItems.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f5f2ec] text-[#aaa49a]">
+                <IconShoppingBag size={26} />
+              </div>
+
+              <h4 className="mt-4 text-[14px] font-black text-[#292721]">
+                Your cart is empty
+              </h4>
+
+              <p className="mt-1 text-[9px] leading-4 text-[#858078]">
+                Add some products to your
+                cart to continue.
+              </p>
+
+              <Link
+                href="/products"
+                onClick={() =>
+                  setOpen(false)
+                }
+                className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--primary)] px-5 text-[8px] font-extrabold uppercase tracking-[0.1em] text-white transition hover:bg-[var(--primary-hover)]"
+              >
+                Shop Products
+                <IconArrowRight size={13} />
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="max-h-[350px] overflow-y-auto p-4">
+                <div className="space-y-3">
+                  {cartItems.map((item) => {
+                    const imageUrl =
+                      getImageUrl(
+                        item.image
+                      );
+
+                    const price =
+                      getProductPrice(
+                        item
+                      );
+
+                    const quantity =
+                      Number(
+                        item.quantity || 1
+                      );
+
+                    const subtotal =
+                      price * quantity;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-2xl border border-[#eeeae3] bg-white p-3 transition hover:border-[#ded8ce]"
+                      >
+                        <div className="flex gap-3">
+                          <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl bg-[#f3f0ea]">
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt={
+                                  item.name ||
+                                  "Product"
+                                }
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-[#aaa49a]">
+                                <IconShoppingBag
+                                  size={24}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <Link
+                                  href={`/products/${item.slug}`}
+                                  onClick={() =>
+                                    setOpen(
+                                      false
+                                    )
+                                  }
+                                  className="line-clamp-2 text-[10px] font-black leading-4 text-[#292721] transition hover:text-[var(--primary)]"
+                                >
+                                  {item.name}
+                                </Link>
+
+                                {item.sku && (
+                                  <p className="mt-1 truncate text-[7px] font-bold uppercase tracking-[0.08em] text-[#aaa49a]">
+                                    SKU:{" "}
+                                    {
+                                      item.sku
+                                    }
+                                  </p>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeFromCart(
+                                    item.id
+                                  )
+                                }
+                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[#aaa49a] transition hover:bg-red-50 hover:text-red-500"
+                                aria-label="Remove product"
+                              >
+                                <IconX size={13} />
+                              </button>
+                            </div>
+
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              <div className="flex items-center rounded-lg border border-[#e4dfd7] bg-[#faf9f6]">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    decreaseQuantity(
+                                      item.id
+                                    )
+                                  }
+                                  className="flex h-7 w-7 items-center justify-center text-[#716c63] transition hover:text-[var(--primary)]"
+                                >
+                                  <IconMinus
+                                    size={11}
+                                  />
+                                </button>
+
+                                <span className="flex h-7 min-w-[24px] items-center justify-center text-[9px] font-black text-[#292721]">
+                                  {
+                                    quantity
+                                  }
+                                </span>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    increaseQuantity(
+                                      item.id
+                                    )
+                                  }
+                                  className="flex h-7 w-7 items-center justify-center text-[#716c63] transition hover:text-[var(--primary)]"
+                                >
+                                  <IconPlus
+                                    size={11}
+                                  />
+                                </button>
+                              </div>
+
+                              <div className="text-right">
+                                <p className="text-[11px] font-black text-[#292721]">
+                                  ₹
+                                  {subtotal.toLocaleString(
+                                    "en-IN",
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}
+                                </p>
+
+                                {quantity > 1 && (
+                                  <p className="text-[7px] text-[#aaa49a]">
+                                    ₹
+                                    {price.toLocaleString(
+                                      "en-IN",
+                                      {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      }
+                                    )}{" "}
+                                    each
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="border-t border-[#eeeae3] bg-[#fbfaf7] p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-[#858078]">
+                    Subtotal
+                  </span>
+
+                  <span className="text-[17px] font-black tracking-[-0.03em] text-[#292721]">
+                    ₹
+                    {Number(
+                      cartTotal
+                    ).toLocaleString(
+                      "en-IN",
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
+                    )}
+                  </span>
+                </div>
+
+                <p className="mt-1 text-[8px] text-[#aaa49a]">
+                  Shipping and taxes calculated at checkout.
+                </p>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Link
+                    href="/cart"
+                    onClick={() =>
+                      setOpen(false)
+                    }
+                    className="flex h-11 items-center justify-center rounded-xl border border-[#ded9d1] bg-white text-[8px] font-extrabold uppercase tracking-[0.08em] text-[#625e56] transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
+                  >
+                    View Cart
+                  </Link>
+
+                  <Link
+                    href="/checkout"
+                    onClick={() =>
+                      setOpen(false)
+                    }
+                    className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--primary)] text-[8px] font-extrabold uppercase tracking-[0.08em] text-white transition hover:bg-[var(--primary-hover)]"
+                  >
+                    Checkout
+                    <IconArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function Header() {
+  const [activeMenu, setActiveMenu] =
+    useState(null);
+
+  const [loginOpen, setLoginOpen] =
+    useState(false);
+
+  const [mobileMenu, setMobileMenu] =
+    useState(false);
+
+  const [search, setSearch] =
+    useState("");
+
+  const desktopSearchRef =
+    useRef(null);
+
+  const mobileSearchRef =
+    useRef(null);
+
+  const closeTimer =
+    useRef(null);
 
   const openMenu = (menu) => {
     if (closeTimer.current) {
@@ -837,34 +1100,51 @@ export default function Header() {
     }
   };
 
-  const openSearch = () => {
-    setSearchOpen(true);
-    setActiveMenu(null);
-    setLoginOpen(false);
-  };
-
   const openLogin = () => {
     setLoginOpen(true);
-    setSearchOpen(false);
     setActiveMenu(null);
     setMobileMenu(false);
   };
 
+  const submitSearch = (event) => {
+    event.preventDefault();
+
+    const value = search.trim();
+
+    if (!value) {
+      return;
+    }
+
+    window.location.href = `/search?q=${encodeURIComponent(
+      value
+    )}`;
+  };
+
+  const focusSearch = () => {
+    if (window.innerWidth >= 1280) {
+      desktopSearchRef.current?.focus();
+    } else {
+      mobileSearchRef.current?.focus();
+    }
+  };
+
   useEffect(() => {
     document.body.style.overflow =
-      searchOpen || loginOpen || mobileMenu
+      loginOpen || mobileMenu
         ? "hidden"
         : "";
 
     return () => {
       document.body.style.overflow = "";
     };
-  }, [searchOpen, loginOpen, mobileMenu]);
+  }, [loginOpen, mobileMenu]);
 
   useEffect(() => {
     return () => {
       if (closeTimer.current) {
-        clearTimeout(closeTimer.current);
+        clearTimeout(
+          closeTimer.current
+        );
       }
     };
   }, []);
@@ -877,7 +1157,7 @@ export default function Header() {
             <div className="flex items-center gap-5">
               <Link
                 href="mailto:globaltechnext@gmail.com"
-                className="flex items-center gap-2 text-[10px] font-medium text-white/55 hover:text-[var(--primary)]"
+                className="flex items-center gap-2 text-[10px] font-medium text-white/55 transition hover:text-[var(--primary)]"
               >
                 <IconMail size={13} />
                 globaltechnext@gmail.com
@@ -887,7 +1167,7 @@ export default function Header() {
 
               <Link
                 href="tel:+919555787844"
-                className="flex items-center gap-2 text-[10px] font-medium text-white/55 hover:text-[var(--primary)]"
+                className="flex items-center gap-2 text-[10px] font-medium text-white/55 transition hover:text-[var(--primary)]"
               >
                 <IconPhone size={13} />
                 +91 9555787844
@@ -902,12 +1182,15 @@ export default function Header() {
         </div>
 
         <nav className="border-b border-[#e8e4dc] bg-white">
-          <div className="mx-auto flex h-[78px] max-w-[1400px] items-center gap-3 px-4 sm:px-6 xl:px-8">
+          <div className="mx-auto flex min-h-[78px] max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6 xl:px-8">
             <Link
               href="/"
               className="shrink-0 text-[25px] font-black tracking-[-0.06em] text-[#1d1b18] sm:text-[28px]"
             >
-              Veyra<span className="text-[var(--primary)]">.</span>
+              Veyra
+              <span className="text-[var(--primary)]">
+                .
+              </span>
             </Link>
 
             <div className="ml-auto hidden h-full items-center lg:flex">
@@ -925,64 +1208,72 @@ export default function Header() {
                 Exchange Rates
               </Link>
 
-              {Object.entries(dropdownData).map(
-                ([title, data]) => {
-                  const active =
-                    activeMenu === title;
+              {Object.entries(
+                dropdownData
+              ).map(([title, data]) => {
+                const active =
+                  activeMenu === title;
 
-                  return (
-                    <div
-                      key={title}
-                      className="relative h-full"
-                      onMouseEnter={() =>
-                        openMenu(title)
-                      }
-                      onMouseLeave={delayedClose}
+                return (
+                  <div
+                    key={title}
+                    className="relative h-full"
+                    onMouseEnter={() =>
+                      openMenu(title)
+                    }
+                    onMouseLeave={
+                      delayedClose
+                    }
+                  >
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+
+                        if (active) {
+                          setActiveMenu(
+                            null
+                          );
+                        } else {
+                          openMenu(title);
+                        }
+                      }}
+                      className={`flex h-full items-center gap-1.5 px-4 text-[13px] font-bold transition ${
+                        active
+                          ? "text-[var(--primary)]"
+                          : "text-[#514d46] hover:text-[var(--primary)]"
+                      }`}
                     >
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
+                      {title}
 
-                          if (active) {
-                            keepMenuOpen();
-                          } else {
-                            openMenu(title);
-                          }
-                        }}
-                        className={`flex h-full items-center gap-1.5 px-4 text-[13px] font-bold transition ${
+                      <IconChevronDown
+                        size={14}
+                        className={`transition-transform ${
                           active
-                            ? "text-[var(--primary)]"
-                            : "text-[#514d46] hover:text-[var(--primary)]"
+                            ? "rotate-180"
+                            : ""
                         }`}
+                      />
+                    </button>
+
+                    {active && (
+                      <div
+                        onMouseEnter={
+                          keepMenuOpen
+                        }
+                        onMouseLeave={
+                          delayedClose
+                        }
                       >
-                        {title}
-
-                        <IconChevronDown
-                          size={14}
-                          className={`transition-transform ${
-                            active
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                        <DesktopDropdown
+                          title={title}
+                          data={data}
                         />
-                      </button>
-
-                      {active && (
-                        <div
-                          onMouseEnter={keepMenuOpen}
-                          onMouseLeave={delayedClose}
-                        >
-                          <DesktopDropdown
-                            title={title}
-                            data={data}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-              )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
 
               <Link
                 href="/business"
@@ -992,21 +1283,56 @@ export default function Header() {
               </Link>
             </div>
 
-            <div className="ml-auto flex items-center gap-1 lg:ml-5">
+            <div className="ml-auto flex min-w-0 items-center gap-1 lg:ml-5">
               <CurrencyDropdown />
+
+              <form
+                onSubmit={submitSearch}
+                className="hidden h-10 w-[190px] items-center rounded-xl border border-[#e2ded7] bg-[#faf9f6] px-3 transition focus-within:border-[var(--primary)] focus-within:bg-white focus-within:ring-4 focus-within:ring-[var(--primary)]/10 xl:flex"
+              >
+                <IconSearch
+                  size={17}
+                  className="shrink-0 text-[var(--primary)]"
+                />
+
+                <input
+                  ref={desktopSearchRef}
+                  type="search"
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Search..."
+                  aria-label="Search"
+                  className="ml-2 min-w-0 flex-1 bg-transparent text-[11px] font-semibold text-[#292722] outline-none placeholder:text-[#aaa59d]"
+                />
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearch("")
+                    }
+                    aria-label="Clear search"
+                    className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#aaa59d] transition hover:bg-[#eeeae4] hover:text-[#514d46]"
+                  >
+                    <IconX size={13} />
+                  </button>
+                )}
+              </form>
 
               <button
                 type="button"
-                onClick={openSearch}
                 aria-label="Search"
-                className={`flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-[#f4f1ec] hover:text-[var(--primary)] ${
-                  searchOpen
-                    ? "bg-[#f4f1ec] text-[var(--primary)]"
-                    : "text-[#555149]"
-                }`}
+                onClick={focusSearch}
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-[#555149] transition hover:bg-[#f4f1ec] hover:text-[var(--primary)] xl:hidden"
               >
                 <IconSearch size={20} />
               </button>
+
+              <CartButton />
 
               <button
                 type="button"
@@ -1037,6 +1363,45 @@ export default function Header() {
                 <IconMenu2 size={21} />
               </button>
             </div>
+          </div>
+
+          <div className="border-t border-[#eeeae4] px-4 py-2 xl:hidden">
+            <form
+              onSubmit={submitSearch}
+              className="mx-auto flex h-11 max-w-[1400px] items-center rounded-xl border border-[#e2ded7] bg-[#faf9f6] px-3 transition focus-within:border-[var(--primary)] focus-within:bg-white focus-within:ring-4 focus-within:ring-[var(--primary)]/10"
+            >
+              <IconSearch
+                size={17}
+                className="shrink-0 text-[var(--primary)]"
+              />
+
+              <input
+                ref={mobileSearchRef}
+                type="search"
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value
+                  )
+                }
+                placeholder="Search currencies, rates, transfers..."
+                aria-label="Mobile search"
+                className="ml-2 min-w-0 flex-1 bg-transparent text-[11px] font-semibold text-[#292722] outline-none placeholder:text-[#aaa59d]"
+              />
+
+              {search && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSearch("")
+                  }
+                  aria-label="Clear search"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#aaa59d] hover:bg-[#eeeae4]"
+                >
+                  <IconX size={14} />
+                </button>
+              )}
+            </form>
           </div>
         </nav>
 
@@ -1073,19 +1438,18 @@ export default function Header() {
         </div>
       </header>
 
-      <SearchPanel
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
-
       <LoginModal
         open={loginOpen}
-        onClose={() => setLoginOpen(false)}
+        onClose={() =>
+          setLoginOpen(false)
+        }
       />
 
       <MobileMenu
         open={mobileMenu}
-        onClose={() => setMobileMenu(false)}
+        onClose={() =>
+          setMobileMenu(false)
+        }
         onLogin={openLogin}
       />
     </>

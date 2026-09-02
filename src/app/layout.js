@@ -1,6 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
+import Header from "./layouts/header";
+import { CartProvider } from "./context/CartContext";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -23,11 +25,17 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <Script
-          src="https://sdk.cashfree.com/js/v3/cashfree.js"
-          strategy="afterInteractive"
-        />
+        <>
+          <CartProvider>
+            <Header />
+
+            {children}
+            <Script
+              src="https://sdk.cashfree.com/js/v3/cashfree.js"
+              strategy="afterInteractive"
+            />
+          </CartProvider>
+        </>
       </body>
     </html>
   );
