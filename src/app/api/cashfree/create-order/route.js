@@ -52,7 +52,7 @@ export async function POST(request) {
 
     const customerId = `customer_${Date.now()}`;
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://veyra.globaltechnext.com";
 
     const payload = {
       order_id: orderId,
